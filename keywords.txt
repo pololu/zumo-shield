@@ -1,0 +1,49 @@
+#######################################
+# Syntax Coloring Map OrangutanBuzzer
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+OrangutanBuzzer	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+playFrequency	KEYWORD2
+playNote	KEYWORD2
+play	KEYWORD2
+playFromProgramSpace	KEYWORD2
+isPlaying	KEYWORD2
+stopPlaying	KEYWORD2
+playMode	KEYWORD2
+playCheck	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+PLAY_AUTOMATIC	LITERAL1
+PLAY_CHECK	LITERAL1
+C	LITERAL1
+C_SHARP	LITERAL1
+D_FLAT	LITERAL1
+D	LITERAL1
+D_SHARP	LITERAL1
+E_FLAT	LITERAL1
+E	LITERAL1
+F	LITERAL1
+F_SHARP	LITERAL1
+G_FLAT	LITERAL1
+G	LITERAL1
+G_SHARP	LITERAL1
+A_FLAT	LITERAL1
+A	LITERAL1
+A_SHARP	LITERAL1
+B_FLAT	LITERAL1
+B	LITERAL1
+A4	LITERAL1
+SILENT_NOTE	LITERAL1
+DIV_BY_10	LITERAL1
