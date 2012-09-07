@@ -67,15 +67,15 @@
 #define DIV_BY_10     (1 << 15) // frequency bit that indicates Hz/10
 
 
-#if defined(__AVR_ATmega32U4__)
+#if defined(__AVR_ATmega32U4__) // PD7 (OC4D)
 
 #define BUZZER_DDR  DDRD
 #define BUZZER      (1 << PORTD7)
 
-#else
+#else // 328P: PD3 (OC2B)
 
 #define BUZZER_DDR  DDRB
-#define BUZZER      (1 << PORTB7)
+#define BUZZER      (1 << PORTB3)
 
 #endif
 
