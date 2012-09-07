@@ -1,17 +1,15 @@
-#include <OrangutanLCD.h>
-#include <OrangutanLEDs.h>
-#include <OrangutanBuzzer.h>
+#include <ZumoBuzzer.h>
 
 /*
- * OrangutanBuzzerExample3: for the Orangutan LV-168, Orangutan SV-xx8,
+ * ZumoBuzzerExample3: for the Orangutan LV-168, Orangutan SV-xx8,
  *    or 3pi robot
  *
- * This example uses the OrangutanBuzzer library to play a series of notes on
+ * This example uses the ZumoBuzzer library to play a series of notes on
  * the target's piezo buzzer.
  *
- * This example demonstrates the use of the OrangutanBuzzer::playMode()
- * and OrangutanBuzzer::playCheck() methods, which allow you to select
- * whether the melody sequence initiated by OrangutanBuzzer::play() is
+ * This example demonstrates the use of the ZumoBuzzer::playMode()
+ * and ZumoBuzzer::playCheck() methods, which allow you to select
+ * whether the melody sequence initiated by ZumoBuzzer::play() is
  * played automatically in the background by the Timer1 interrupt, or if
  * the play is driven by the playCheck() method in your main loop.
  *
@@ -61,7 +59,7 @@
 //#define ALWAYS_CHECK       // playMode() is always PLAY_CHECK (delays interrupt the sequence)
 
 OrangutanLEDs leds;
-OrangutanBuzzer buzzer;
+ZumoBuzzer buzzer;
 OrangutanLCD lcd;
 
 #include <avr/pgmspace.h>

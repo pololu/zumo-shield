@@ -1,16 +1,14 @@
-#include <OrangutanLCD.h>
-#include <OrangutanPushbuttons.h>
-#include <OrangutanBuzzer.h>
+#include <ZumoBuzzer.h>
 
 /*
- * OrangutanBuzzerExample2: for the Orangutan SV-xx8, Orangutan LV-168,
+ * ZumoBuzzerExample2: for the Orangutan SV-xx8, Orangutan LV-168,
  *    and 3pi robot
  *
- * This example uses the OrangutanBuzzer library to play a series of notes on
+ * This example uses the ZumoBuzzer library to play a series of notes on
  * the buzzer.  It uses the OrangutanPushbuttons library to allow the user
  * select which melody plays.
  *
- * This example demonstrates the use of the OrangutanBuzzer::play() method,
+ * This example demonstrates the use of the ZumoBuzzer::play() method,
  * which plays the specified melody entirely in the background, requiring
  * no further action from the user once the method is called.  The CPU
  * is then free to execute other code while the melody plays.
@@ -20,9 +18,7 @@
  * http://forum.pololu.com
  */
 
-OrangutanLCD lcd;
-OrangutanPushbuttons buttons;
-OrangutanBuzzer buzzer;
+ZumoBuzzer buzzer;
 
 #include <avr/pgmspace.h>  // this lets us refer to data in program space (i.e. flash)
 // store this fugue in program space using the PROGMEM macro.  
@@ -42,14 +38,18 @@ const char fugue[] PROGMEM =
 
 void setup()                    // run once, when the sketch starts
 {
-  lcd.print("Press a");
+  /*lcd.print("Press a");
   lcd.gotoXY(0, 1);
-  lcd.print("button..");
+  lcd.print("button..");*/
+  digitalWrite(12, HIGH);
+  delay(1);
+  while (digitalRead(12));
+  buzzer.playFromProgramSpace(fugue);
 }
 
 void loop()                     // run over and over again
 {
-  // wait here for one of the three buttons to be pushed
+  /*// wait here for one of the three buttons to be pushed
   unsigned char button = buttons.waitForButton(ALL_BUTTONS);
   lcd.clear();
   
@@ -80,5 +80,5 @@ void loop()                     // run over and over again
       buzzer.playNote(NOTE_A(5), 200, 15);
       lcd.print("note A5"); 
     }
-  }
+  }*/
 }

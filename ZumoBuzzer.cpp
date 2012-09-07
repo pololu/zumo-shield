@@ -1,12 +1,12 @@
 /*
-  OrangutanBuzzer.cpp - Library for controlling the buzzer on the Orangutan LV,
+  ZumoBuzzer.cpp - Library for controlling the buzzer on the Orangutan LV,
     SV, SVP, or 3pi robot. This library uses a timer1 PWM to generate the note
-	frequencies and timer1 overflow interrupt to time the duration of the
-	notes, so the buzzer can be playing a melody in the background while
-	the rest of your code executes. This library relies on Timer1, so it will
-	conflict with any other libraries that use Timer1 (e.g. OrangutanServos).
-	You cannot use the OrangutanServos library to control servos while using
-	the OrangutanBuzzer library to play music.
+  frequencies and timer1 overflow interrupt to time the duration of the
+  notes, so the buzzer can be playing a melody in the background while
+  the rest of your code executes. This library relies on Timer1, so it will
+  conflict with any other libraries that use Timer1 (e.g. OrangutanServos).
+  You cannot use the OrangutanServos library to control servos while using
+  the ZumoBuzzer library to play music.
 */
 
 /*
@@ -30,179 +30,153 @@
 
 
 #ifndef F_CPU
-#define F_CPU 20000000UL	// Orangutans run at 20 MHz
+#define F_CPU 16000000UL  // Standard Arduinos run at 16 MHz
 #endif //!F_CPU
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
-#include "OrangutanBuzzer.h"
-#include "../OrangutanResources/include/OrangutanModel.h"
-#ifdef _ORANGUTAN_X2
-#include "../OrangutanX2/OrangutanX2.h"
+#include "ZumoBuzzer.h"
+
+/*#define TIMER1_OFF          0x00  // timer1 disconnected
+#define TIMER1_CLK_1        0x01  // 20 MHz
+#define TIMER1_CLK_8        0x02  // 2.5 MHz*/
+
+#ifdef __AVR_ATmega32U4__
+
+#define TIMER4_CLK_8  0x4 //  2 MHz
+
+#define ENABLE_TIMER_INTERRUPT()   TIMSK4 = (1 << TOIE4)
+#define DISABLE_TIMER_INTERRUPT()  TIMSK4 = 0
+
+#else
+#error wut
 #endif
 
-#define TIMER1_OFF					0x00	// timer1 disconnected
-#define TIMER1_CLK_1				0x01	// 20 MHz
-#define TIMER1_CLK_8				0x02	// 2.5 MHz
-
-#define ENABLE_TIMER1_INTERRUPT()	TIMSK1 = (1 << TOIE1)
-#define DISABLE_TIMER1_INTERRUPT()	TIMSK1 = 0
-
 unsigned char buzzerInitialized = 0;
-volatile unsigned char buzzerFinished = 1;	// flag: 0 while playing
+volatile unsigned char buzzerFinished = 1;  // flag: 0 while playing
 const char *buzzerSequence = 0;
 
 // declaring these globals as static means they won't conflict
 // with globals in other .cpp files that share the same name
-static volatile unsigned int buzzerTimeout = 0;		// tracks buzzer time limit
+static volatile unsigned int buzzerTimeout = 0;    // tracks buzzer time limit
 static char play_mode_setting = PLAY_AUTOMATIC;
 
-extern volatile unsigned char buzzerFinished;	// flag: 0 while playing
+extern volatile unsigned char buzzerFinished;  // flag: 0 while playing
 extern const char *buzzerSequence;
 
 
 static unsigned char use_program_space; // boolean: true if we should
-										// use program space
+                    // use program space
 
 // music settings and defaults
-static unsigned char octave = 4;				// the current octave
-static unsigned int whole_note_duration = 2000;	// the duration of a whole note
+static unsigned char octave = 4;        // the current octave
+static unsigned int whole_note_duration = 2000;  // the duration of a whole note
 static unsigned int note_type = 4;              // 4 for quarter, etc
-static unsigned int duration = 500;				// the duration of a note in ms
-static unsigned int volume = 15;				// the note volume
-static unsigned char staccato = 0; 			// true if playing staccato
+static unsigned int duration = 500;        // the duration of a note in ms
+static unsigned int volume = 15;        // the note volume
+static unsigned char staccato = 0;       // true if playing staccato
 
 // staccato handling
-static unsigned char staccato_rest_duration;	// duration of a staccato
-												//  rest, or zero if it is time
-												//  to play a note
+static unsigned char staccato_rest_duration;  // duration of a staccato
+                        //  rest, or zero if it is time
+                        //  to play a note
 
 static void nextNote();
 
-// Timer1 overflow interrupt
-ISR (TIMER1_OVF_vect)
+#ifdef __AVR_ATmega32U4__
+
+// Timer4 overflow interrupt
+ISR (TIMER4_OVF_vect)
 {
-	if (buzzerTimeout-- == 0)
-	{
-		DISABLE_TIMER1_INTERRUPT();
-		sei();		// re-enable global interrupts (nextNote() is very slow)
-		TCCR1B = (TCCR1B & 0xF8) | TIMER1_CLK_1;	// select IO clock
-		OCR1A = (F_CPU/2) / 1000;			// set TOP for freq = 1 kHz
-		OCR1B = 0;						// 0% duty cycle
-		buzzerFinished = 1;
-		if (buzzerSequence && (play_mode_setting == PLAY_AUTOMATIC))
-			nextNote();
-	}
+  if (buzzerTimeout-- == 0)
+  {
+    DISABLE_TIMER_INTERRUPT();
+    sei();                                    // re-enable global interrupts (nextNote() is very slow)
+    TCCR4B = (TCCR4B & 0xF0) | TIMER4_CLK_8;  // select IO clock
+    unsigned int top = (F_CPU/16) / 1000;     // set TOP for freq = 1 kHz: 
+    TC4H = top >> 8;                          // top 2 bits... (TC4H temporarily stores top 2 bits of 10-bit accesses)
+    OCR4C = top;                              // and bottom 8 bits
+    TC4H = 0;                                 // 0% duty cycle: top 2 bits...
+    OCR4D = 0;                                // and bottom 8 bits
+    buzzerFinished = 1;
+    if (buzzerSequence && (play_mode_setting == PLAY_AUTOMATIC))
+      nextNote();
+  }
 }
+
+#else
+#error wut
+#endif
 
 
 // constructor
 
-OrangutanBuzzer::OrangutanBuzzer()
+ZumoBuzzer::ZumoBuzzer()
 {
 }
-
-
-extern "C" void play_frequency(unsigned int freq, unsigned int dur, 
-							   unsigned char volume)
-{
-	OrangutanBuzzer::playFrequency(freq, dur, volume);
-}
-
-extern "C" void play_note(unsigned char note, unsigned int dur,
-						  unsigned char volume)
-{
-	OrangutanBuzzer::playNote(note, dur, volume);
-}
-
-extern "C" void play(const char *sequence)
-{
-	OrangutanBuzzer::play(sequence);
-}
-
-extern "C" void play_from_program_space(const char *sequence_p)
-{
-	OrangutanBuzzer::playFromProgramSpace(sequence_p);
-}
-
-extern "C" unsigned char is_playing()
-{
-	return OrangutanBuzzer::isPlaying();
-}
-
-extern "C" void stop_playing()
-{
-	OrangutanBuzzer::stopPlaying();
-}
-
-extern "C" void play_mode(unsigned char mode)
-{
-	OrangutanBuzzer::playMode(mode);
-}
-
-extern "C" unsigned char play_check()
-{
-	return OrangutanBuzzer::playCheck();
-}
-
-
-extern unsigned char buzzerInitialized;
 
 // this is called by playFrequency()
-inline void OrangutanBuzzer::init()
+inline void ZumoBuzzer::init()
 {
-	if (!buzzerInitialized)
-	{
-		buzzerInitialized = 1;
-		init2();
-	}
+  if (!buzzerInitialized)
+  {
+    buzzerInitialized = 1;
+    init2();
+  }
 }
 
-// initializes timer1 for buzzer control
-void OrangutanBuzzer::init2()
+// initializes timer4 (32U4) or timer2 (328P) for buzzer control
+void ZumoBuzzer::init2()
 {
-	DISABLE_TIMER1_INTERRUPT();	// disable all timer1 interrupts
-		
-#ifdef _ORANGUTAN_X2
-	TCCR1A = 0x03;	// bits 6 and 7 clear: normal port op., OC1A disconnected
-					// bit 4 and 5 clear: normal port op., OC1B disconnected
-					// bits 2 and 3: not used
-					// bits 0 & 1 set: combine with bits 3 & 4 of TCCR1B...
+#ifdef __AVR_ATmega32U4__
+  DISABLE_TIMER_INTERRUPT();  // disable all timer4 interrupts
+  
+  TCCR4A = 0x00;  // bits 7 and 6 clear: normal port op., OC4A disconnected
+                  // bits 5 and 4 clear: normal port op., OC4B disconnected
+                  // bit 3 clear: no force output compare for channel A
+                  // bit 2 clear: no force output compare for channel B
+                  // bit 1 clear: disable PWM for channel A
+                  // bit 0 clear: disable PWM for channel B
+  
+  TCCR4B = 0x04;  // bit 7 clear: disable PWM inversion
+                  // bit 6 clear: no prescaler reset
+                  // bits 5 and 4 clear: dead time prescaler 1
+                  // bit 3 clear, 2 set, 1-0 clear: timer clock = CK/8
+  
+  TCCR4C = 0x09;  // bits 7 and 6 clear: normal port op., OC4A disconnected
+                  // bits 5 and 4 clear: normal port op., OC4B disconnected
+                  // bit 3 set, 2 clear: clear OC4D on comp match when upcounting, 
+                  //                     set OC4D on comp match when downcounting
+                  // bit 1 clear: no force output compare for channel D
+                  // bit 0 set: enable PWM for channel 4
+
+  TCCR4D = 0x01;  // bit 7 clear: disable fault protection interrupt
+                  // bit 6 clear: disable fault protection mode
+                  // bit 5 clear: disable fault protection noise canceler
+                  // bit 4 clear: falling edge triggers fault
+                  // bit 3 clear: disable fault protection analog comparator
+                  // bit 2 clear: fault protection interrupt flag
+                  // bit 1 clear, 0 set: select waveform generation mode,
+                  // phase- and frequency-correct PWM, TOP = OCR4C,
+                  // OCR4D set at BOTTOM, TOV4 flag set at BOTTOM
+
+  // This sets timer 4 to run in phase- and frequency-correct PWM mode,
+  //   where TOP = OCR4C, OCR4D is updated at BOTTOM, TOV1 Flag is set on BOTTOM.
+  //   OC4D is cleared on compare match when upcounting, set on compare
+  //   match when downcounting; OC4A and OC4B are disconnected.
+  
+    unsigned int top = (F_CPU/16) / 1000; // set TOP for freq = 1 kHz: 
+    TC4H = top >> 8;                      // top 2 bits...
+    OCR4C = top;                          // and bottom 8 bits
+    TC4H = 0;                             // 0% duty cycle: top 2 bits...
+    OCR4D = 0;                            // and bottom 8 bits
 #else
-	TCCR1A = 0x23;	// bits 6 and 7 clear: normal port op., OC1A disconnected
-					// bit 4 clear, 5 set: clear OC1B on comp match when upcounting, 
-					//                     set OC1B on comp match when downcounting
-					// bits 2 and 3: not used
-					// bits 0 & 1 set: combine with bits 3 & 4 of TCCR1B...
+#error wut
 #endif
-
-	TCCR1B = 0x11;	// bit 7 clear: input capture noise canceler disabled
-					// bit 6 clear: input capture triggers on falling edge
-					// bit 5: not used
-					// bit 3 clear and 4 set: combine with bits 0 & 1 of TCCR1A to
-					// 		select waveform generation mode 11, phase-correct PWM,
-					//		TOP = OCR1A, OCR1B set at TOP, TOV1 flag set at TOP
-					// bit 0 set, 1-2 clear: timer clock = IO clk (prescaler 1)
-
-	TCCR1C = 0x00;	// bit 7 clear: no force output compare for channel A
-					// bit 6 clear: no force output compare for channel B
-					// bits 0 - 5: not used
-
-	// This sets timer 1 to run in fast PWM mode, where TOP = ICR1, 
-	//   OCR1A is updated at TOP, TOV1 Flag is set on TOP.  OC1A is cleared
-	//   on compare match, set at TOP; OC1B is disconnected.
-	//   Note: if the PWM frequency and duty cycle are changed, the first
-	//   cycle of the new frequency will be at the old duty cycle, since
-	//   the duty cycle (OCR1A) is not updated until TOP.
-
-	OCR1A = (F_CPU/2) / 1000;	// set TOP for freq = 1 kHz
-	OCR1B = 0;					// set 0% duty cycle
-	
-#ifndef _ORANGUTAN_X2
-	BUZZER_DDR |= BUZZER;		// buzzer pin set as an output
-#endif
-	sei();
+  
+  BUZZER_DDR |= BUZZER;    // buzzer pin set as an output
+  sei();
 }
 
 
@@ -214,90 +188,95 @@ void OrangutanBuzzer::init2()
 //   greater than 1 kHz.  For example, the max duration you can use for a
 //   frequency of 10 kHz is 6553 ms.  If you use a duration longer than this,
 //   you will cause an integer overflow that produces unexpected behavior.
-void OrangutanBuzzer::playFrequency(unsigned int freq, unsigned int dur, 
-				   					unsigned char volume)
+void ZumoBuzzer::playFrequency(unsigned int freq, unsigned int dur, 
+                     unsigned char volume)
 {
-	init();		// initializes the buzzer if necessary
-	buzzerFinished = 0;
-	
-#ifdef _ORANGUTAN_X2
+  init(); // initializes the buzzer if necessary
+  buzzerFinished = 0;
+  
+  unsigned int timeout;
+  unsigned char multiplier = 1;
+  
+  if (freq & DIV_BY_10) // if frequency's DIV_BY_10 bit is set
+  {                     //  then the true frequency is freq/10
+    multiplier = 10;    //  (gives higher resolution for small freqs)
+    freq &= ~DIV_BY_10; // clear DIV_BY_10 bit
+  }
 
-	DISABLE_TIMER1_INTERRUPT();
+  unsigned char min = 40 * multiplier;
+  if (freq < min) // min frequency allowed is 40 Hz
+    freq = min;  
+  if (multiplier == 1 && freq > 10000)
+    freq = 10000;      // max frequency allowed is 10kHz
 
-	OrangutanX2::setVolume(volume);
-	OrangutanX2::playFrequency(freq, dur);
-	buzzerTimeout = dur;		// timeout is duration (timer1 set to 1kHz)
-	
+#ifdef __AVR_ATmega32U4__
+  unsigned long top;
+  unsigned char dividerExponent = 0;
+  
+  // calculate necessary clock source and counter top value to get freq
+  top = (unsigned int)(((F_CPU/2 * multiplier) + (freq >> 1))/ freq);
+  
+  while (top > 1023)
+  {
+    dividerExponent++;
+    top = (unsigned int)((((F_CPU/2 >> (dividerExponent)) * multiplier) + (freq >> 1))/ freq);
+  }
+#else   
+#error wut
+
+
+    newOCR1A = (unsigned int)(((F_CPU/2) + (freq >> 1)) / freq);
+
+    // timer1 clock select:
+    newTCCR1B |= TIMER1_CLK_1;  // select IO clk (prescaler = 1)
+  }
+
+  else                      // clock prescaler = 8
+  {
+
+
+    // set top (frequency):
+    if (multiplier == 10)
+      newOCR1A = (unsigned int)(((F_CPU/2/8*10) + (freq >> 1))/ freq);
+    else
+      newOCR1A = (unsigned int)(((F_CPU/2/8) + (freq >> 1)) / freq);
+    
+    // replace with?: newOCR1A = (unsigned int)(((F_CPU/16*multiplier) + (freq >> 1))/ freq);
+      
+    // timer1 clock select
+    newTCCR1B |= TIMER1_CLK_8;  // select IO clk / 8
+  }
+#endif
+
+  // set timeout (duration):
+  if (multiplier == 10)
+    freq = (freq + 5) / 10;
+
+  if (freq == 1000)
+    timeout = dur;  // duration for silent notes is exact
+  else
+    timeout = (unsigned int)((long)dur * freq / 1000);
+  
+  if (volume > 15)
+    volume = 15;
+
+  DISABLE_TIMER_INTERRUPT();      // disable interrupts while writing to registers 
+  
+#ifdef __AVR_ATmega32U4__
+  TCCR4B = (TCCR4B & 0xF0) | (dividerExponent + 1); // select timer 4 clock prescaler: divider = 2^n if CS4 = n+1
+  TC4H = top >> 8;                                  // set timer 1 pwm frequency: top 2 bits...
+  OCR4C = top;                                      // and bottom 8 bits
+  unsigned int width = top >> (16 - volume);        // set duty cycle (volume):
+  TC4H = width >> 8;                                // top 2 bits...
+  OCR4D = width;                                    // and bottom 8 bits
+  buzzerTimeout = timeout;                          // set buzzer duration
+
+  TIFR4 |= 0xFF;  // clear any pending t4 overflow int.      
 #else
+#error wut
+#endif
 
-	unsigned int newOCR1A;
-	unsigned int newTCCR1B;
-	unsigned int timeout;
-	unsigned char multiplier = 1;
-	
-
-	if (freq & DIV_BY_10)		// if frequency's DIV_BY_10 bit is set
-	{							//  then the true frequency is freq/10
-		multiplier = 10;		//  (gives higher resolution for small freqs)
-		freq &= ~DIV_BY_10;		// clear DIV_BY_10 bit
-	}
-
-	newTCCR1B = TCCR1B & 0xF8;	// clear clock select bits
-
-	// calculate necessary clock source and counter top value to get freq
-	if (freq > 200 * ((unsigned int)multiplier))	// clock prescaler = 1
-	{
-		if (freq > 10000)
-			freq = 10000;			// max frequency allowed is 10kHz
-
-		newOCR1A = (unsigned int)((10000000UL + (freq >> 1)) / freq);
-
-		// timer1 clock select:
-		newTCCR1B |= TIMER1_CLK_1;	// select IO clk (prescaler = 1)
-	}
-
-	else											// clock prescaler = 8
-	{
-		unsigned char val = 40 * multiplier;
-		if (freq < val)				// min frequency allowed is 40 Hz
-			freq = val;
-
-		// set top (frequency):
-		if (multiplier == 10)
-			newOCR1A = (unsigned int)((12500000UL + (freq >> 1))/ freq);
-		else
-			newOCR1A = (unsigned int)((1250000UL + (freq >> 1)) / freq);
-
-		// timer1 clock select
-		newTCCR1B |= TIMER1_CLK_8;	// select IO clk / 8
-	}
-
-
-	// set timeout (duration):
-	if (multiplier == 10)
-		freq = (freq + 5) / 10;
-
-	if (freq == 1000)
-		timeout = dur;	// duration for silent notes is exact
-	else
-		timeout = (unsigned int)((long)dur * freq / 1000);
-	
-	if (volume > 15)
-		volume = 15;
-
-	DISABLE_TIMER1_INTERRUPT();			// disable interrupts while writing 
-										//  to 16-bit registers
-	TCCR1B = newTCCR1B;					// select timer 1 clock prescaler
-	OCR1A = newOCR1A;					// set timer 1 pwm frequency
-	OCR1B = OCR1A >> (16 - volume);	// set duty cycle (volume)
-	buzzerTimeout = timeout;			// set buzzer duration
-	
-#endif // _ORANGUTAN_X2
-
-	TIFR1 |= 0xFF;						// clear any pending t1 overflow int.
-	ENABLE_TIMER1_INTERRUPT();			// this is the only place the t1
-										//  overflow is enabled unless using X2
-										
+  ENABLE_TIMER_INTERRUPT();  
 }
 
 
@@ -311,131 +290,115 @@ void OrangutanBuzzer::playFrequency(unsigned int freq, unsigned int dur,
 //  greater than 1 kHz.  For example, the max duration you can use for a
 //  frequency of 10 kHz is 6553 ms.  If you use a duration longer than this,
 //  you will cause an integer overflow that produces unexpected behavior.
-void OrangutanBuzzer::playNote(unsigned char note, unsigned int dur,
-							   unsigned char volume)
+void ZumoBuzzer::playNote(unsigned char note, unsigned int dur,
+                 unsigned char volume)
 {
-	// note = key + octave * 12, where 0 <= key < 12
-	// example: A4 = A + 4 * 12, where A = 9 (so A4 = 57)
-	// A note is converted to a frequency by the formula:
-	//   Freq(n) = Freq(0) * a^n
-	// where
-	//   Freq(0) is chosen as A4, which is 440 Hz
-	// and
-	//   a = 2 ^ (1/12)
-	// n is the number of notes you are away from A4.
-	// One can see that the frequency will double every 12 notes.
-	// This function exploits this property by defining the frequencies of the
-	// 12 lowest notes allowed and then doubling the appropriate frequency
-	// the appropriate number of times to get the frequency for the specified
-	// note.
+  // note = key + octave * 12, where 0 <= key < 12
+  // example: A4 = A + 4 * 12, where A = 9 (so A4 = 57)
+  // A note is converted to a frequency by the formula:
+  //   Freq(n) = Freq(0) * a^n
+  // where
+  //   Freq(0) is chosen as A4, which is 440 Hz
+  // and
+  //   a = 2 ^ (1/12)
+  // n is the number of notes you are away from A4.
+  // One can see that the frequency will double every 12 notes.
+  // This function exploits this property by defining the frequencies of the
+  // 12 lowest notes allowed and then doubling the appropriate frequency
+  // the appropriate number of times to get the frequency for the specified
+  // note.
 
-	// if note = 16, freq = 41.2 Hz (E1 - lower limit as freq must be >40 Hz)
-	// if note = 57, freq = 440 Hz (A4 - central value of ET Scale)
-	// if note = 111, freq = 9.96 kHz (D#9 - upper limit, freq must be <10 kHz)
-	// if note = 255, freq = 1 kHz and buzzer is silent (silent note)
+  // if note = 16, freq = 41.2 Hz (E1 - lower limit as freq must be >40 Hz)
+  // if note = 57, freq = 440 Hz (A4 - central value of ET Scale)
+  // if note = 111, freq = 9.96 kHz (D#9 - upper limit, freq must be <10 kHz)
+  // if note = 255, freq = 1 kHz and buzzer is silent (silent note)
 
-	// The most significant bit of freq is the "divide by 10" bit.  If set,
-	// the units for frequency are .1 Hz, not Hz, and freq must be divided
-	// by 10 to get the true frequency in Hz.  This allows for an extra digit
-	// of resolution for low frequencies without the need for using floats.
-	
-#ifdef _ORANGUTAN_X2
+  // The most significant bit of freq is the "divide by 10" bit.  If set,
+  // the units for frequency are .1 Hz, not Hz, and freq must be divided
+  // by 10 to get the true frequency in Hz.  This allows for an extra digit
+  // of resolution for low frequencies without the need for using floats.
 
-	init();								// initializes the buzzer if necessary
-	buzzerFinished = 0;
-	DISABLE_TIMER1_INTERRUPT();
-	OrangutanX2::setVolume(volume);
-	OrangutanX2::playNote(note, dur);
-	buzzerTimeout = dur;				// timeout = dur since timer 1 ticks at 1 kHz
-	TIFR1 |= 0xFF;						// clear any pending t1 overflow int.
-	ENABLE_TIMER1_INTERRUPT();			// also enable timer 1 interrupts here when
-										//  using Orangutan X2
-	sei();
-	
-#else
+  unsigned int freq = 0;
+  unsigned char offset_note = note - 16;
 
-	unsigned int freq = 0;
-	unsigned char offset_note = note - 16;
+  if (note == SILENT_NOTE || volume == 0)
+  {
+    freq = 1000;  // silent notes => use 1kHz freq (for cycle counter)
+    playFrequency(freq, dur, 0);
+    return;
+  }
 
-	if (note == SILENT_NOTE || volume == 0)
-	{
-		freq = 1000;	// silent notes => use 1kHz freq (for cycle counter)
-		playFrequency(freq, dur, 0);
-		return;
-	}
+  if (note <= 16)
+    offset_note = 0;
+  else if (offset_note > 95)
+    offset_note = 95;
 
-	if (note <= 16)
-		offset_note = 0;
-	else if (offset_note > 95)
-		offset_note = 95;
+  unsigned char exponent = offset_note / 12;
 
-	unsigned char exponent = offset_note / 12;
+  // frequency table for the lowest 12 allowed notes
+  //   frequencies are specified in tenths of a Hertz for added resolution
+  switch (offset_note - exponent * 12)  // equivalent to (offset_note % 12)
+  {
+    case 0:        // note E1 = 41.2 Hz
+      freq = 412;
+      break;
+    case 1:        // note F1 = 43.7 Hz
+      freq = 437;
+      break;
+    case 2:        // note F#1 = 46.3 Hz
+      freq = 463;
+      break;
+    case 3:        // note G1 = 49.0 Hz
+      freq = 490;
+      break;
+    case 4:        // note G#1 = 51.9 Hz
+      freq = 519;
+      break;
+    case 5:        // note A1 = 55.0 Hz
+      freq = 550;
+      break;
+    case 6:        // note A#1 = 58.3 Hz
+      freq = 583;
+      break;
+    case 7:        // note B1 = 61.7 Hz
+      freq = 617;
+      break;
+    case 8:        // note C2 = 65.4 Hz
+      freq = 654;
+      break;
+    case 9:        // note C#2 = 69.3 Hz
+      freq = 693;
+      break;
+    case 10:      // note D2 = 73.4 Hz
+      freq = 734;
+      break;
+    case 11:      // note D#2 = 77.8 Hz
+      freq = 778;
+      break;
+  }
 
-	// frequency table for the lowest 12 allowed notes
-	//   frequencies are specified in tenths of a Hertz for added resolution
-	switch (offset_note - exponent * 12)	// equivalent to (offset_note % 12)
-	{
-		case 0:				// note E1 = 41.2 Hz
-			freq = 412;
-			break;
-		case 1:				// note F1 = 43.7 Hz
-			freq = 437;
-			break;
-		case 2:				// note F#1 = 46.3 Hz
-			freq = 463;
-			break;
-		case 3:				// note G1 = 49.0 Hz
-			freq = 490;
-			break;
-		case 4:				// note G#1 = 51.9 Hz
-			freq = 519;
-			break;
-		case 5:				// note A1 = 55.0 Hz
-			freq = 550;
-			break;
-		case 6:				// note A#1 = 58.3 Hz
-			freq = 583;
-			break;
-		case 7:				// note B1 = 61.7 Hz
-			freq = 617;
-			break;
-		case 8:				// note C2 = 65.4 Hz
-			freq = 654;
-			break;
-		case 9:				// note C#2 = 69.3 Hz
-			freq = 693;
-			break;
-		case 10:			// note D2 = 73.4 Hz
-			freq = 734;
-			break;
-		case 11:			// note D#2 = 77.8 Hz
-			freq = 778;
-			break;
-	}
+  if (exponent < 7)
+  {
+    freq = freq << exponent;  // frequency *= 2 ^ exponent
+    if (exponent > 1)      // if the frequency is greater than 160 Hz
+      freq = (freq + 5) / 10;  //   we don't need the extra resolution
+    else
+      freq += DIV_BY_10;    // else keep the added digit of resolution
+  }
+  else
+    freq = (freq * 64 + 2) / 5;  // == freq * 2^7 / 10 without int overflow
 
-	if (exponent < 7)
-	{
-		freq = freq << exponent;	// frequency *= 2 ^ exponent
-		if (exponent > 1)			// if the frequency is greater than 160 Hz
-			freq = (freq + 5) / 10;	//   we don't need the extra resolution
-		else
-			freq += DIV_BY_10;		// else keep the added digit of resolution
-	}
-	else
-		freq = (freq * 64 + 2) / 5;	// == freq * 2^7 / 10 without int overflow
-
-	if (volume > 15)
-		volume = 15;
-	playFrequency(freq, dur, volume);	// set buzzer this freq/duration
-#endif // _ORANGUTAN_X2
+  if (volume > 15)
+    volume = 15;
+  playFrequency(freq, dur, volume);  // set buzzer this freq/duration
 }
 
 
 
 // Returns 1 if the buzzer is currently playing, otherwise it returns 0
-unsigned char OrangutanBuzzer::isPlaying()
+unsigned char ZumoBuzzer::isPlaying()
 {
-	return !buzzerFinished || buzzerSequence != 0;
+  return !buzzerFinished || buzzerSequence != 0;
 }
 
 
@@ -496,56 +459,65 @@ unsigned char OrangutanBuzzer::isPlaying()
 //
 // Here is an example from Bach:
 //   play("T240 L8 a gafaeada c+adaeafa <aa<bac#ada c#adaeaf4");
-void OrangutanBuzzer::play(const char *notes)
+void ZumoBuzzer::play(const char *notes)
 {
-	DISABLE_TIMER1_INTERRUPT();	// prevent this from being interrupted
-	buzzerSequence = notes;
-	use_program_space = 0;
-	staccato_rest_duration = 0;
-	nextNote();					// this re-enables the timer1 interrupt
+  DISABLE_TIMER_INTERRUPT();  // prevent this from being interrupted
+  buzzerSequence = notes;
+  use_program_space = 0;
+  staccato_rest_duration = 0;
+  nextNote();          // this re-enables the timer1 interrupt
 }
 
-void OrangutanBuzzer::playFromProgramSpace(const char *notes_p)
+void ZumoBuzzer::playFromProgramSpace(const char *notes_p)
 {
-	DISABLE_TIMER1_INTERRUPT();	// prevent this from being interrupted
-	buzzerSequence = notes_p;
-	use_program_space = 1;
-	staccato_rest_duration = 0;
-	nextNote();					// this re-enables the timer1 interrupt
+  DISABLE_TIMER_INTERRUPT();  // prevent this from being interrupted
+  buzzerSequence = notes_p;
+  use_program_space = 1;
+  staccato_rest_duration = 0;
+  nextNote();          // this re-enables the timer1 interrupt
 }
 
 
 // stop all sound playback immediately
-void OrangutanBuzzer::stopPlaying()
+void ZumoBuzzer::stopPlaying()
 {
-	DISABLE_TIMER1_INTERRUPT();					// disable interrupts
-	TCCR1B = (TCCR1B & 0xF8) | TIMER1_CLK_1;	// select IO clock
-	OCR1A = (F_CPU/2) / 1000;					// set TOP for freq = 1 kHz
-	OCR1B = 0;									// 0% duty cycle
-	buzzerFinished = 1;
-	buzzerSequence = 0;
-#ifdef _ORANGUTAN_X2
-	OrangutanX2::buzzerOff();
+  DISABLE_TIMER_INTERRUPT();          // disable interrupts
+ 
+#ifdef __AVR_ATmega32U4__
+  TCCR4B = (TCCR4B & 0xF0) | TIMER4_CLK_8;  // select IO clock
+  unsigned int top = (F_CPU/16) / 1000;     // set TOP for freq = 1 kHz: 
+  TC4H = top >> 8;                          // top 2 bits... (TC4H temporarily stores top 2 bits of 10-bit accesses)
+  OCR4C = top;                              // and bottom 8 bits
+  TC4H = 0;                                 // 0% duty cycle: top 2 bits...
+  OCR4D = 0;                                // and bottom 8 bits
+#else 
+#error wut
+  TCCR1B = (TCCR1B & 0xF8) | TIMER1_CLK_1;  // select IO clock
+  OCR1A = (F_CPU/2) / 1000;          // set TOP for freq = 1 kHz
+  OCR1B = 0;                  // 0% duty cycle
 #endif
+
+  buzzerFinished = 1;
+  buzzerSequence = 0;
 }
 
 // Gets the current character, converting to lower-case and skipping
 // spaces.  For any spaces, this automatically increments sequence!
 static char currentCharacter()
 {
-	char c = 0;
-	do
-	{
-		if(use_program_space)
-			c = pgm_read_byte(buzzerSequence);
-		else
-			c = *buzzerSequence;
+  char c = 0;
+  do
+  {
+    if(use_program_space)
+      c = pgm_read_byte(buzzerSequence);
+    else
+      c = *buzzerSequence;
 
-		if(c >= 'A' && c <= 'Z')
-			c += 'a'-'A';
-	} while(c == ' ' && (buzzerSequence ++));
+    if(c >= 'A' && c <= 'Z')
+      c += 'a'-'A';
+  } while(c == ' ' && (buzzerSequence ++));
 
-	return c;
+  return c;
 }
 
 // Returns the numerical argument specified at buzzerSequence[0] and
@@ -553,170 +525,170 @@ static char currentCharacter()
 // argument.
 static unsigned int getNumber()
 {
-	unsigned int arg = 0;
+  unsigned int arg = 0;
 
-	// read all digits, one at a time
-	char c = currentCharacter();
-	while(c >= '0' && c <= '9')
-	{
-		arg *= 10;
-		arg += c-'0';
-		buzzerSequence ++;
-		c = currentCharacter();
-	}
+  // read all digits, one at a time
+  char c = currentCharacter();
+  while(c >= '0' && c <= '9')
+  {
+    arg *= 10;
+    arg += c-'0';
+    buzzerSequence ++;
+    c = currentCharacter();
+  }
 
-	return arg;
+  return arg;
 }
 
 static void nextNote()
 {
-	unsigned char note = 0;
-	unsigned char rest = 0;
-	unsigned char tmp_octave = octave; // the octave for this note
-	unsigned int tmp_duration; // the duration of this note
-	unsigned int dot_add;
+  unsigned char note = 0;
+  unsigned char rest = 0;
+  unsigned char tmp_octave = octave; // the octave for this note
+  unsigned int tmp_duration; // the duration of this note
+  unsigned int dot_add;
 
-	char c; // temporary variable
+  char c; // temporary variable
 
-	// if we are playing staccato, after every note we play a rest
-	if(staccato && staccato_rest_duration)
-	{
-		OrangutanBuzzer::playNote(SILENT_NOTE, staccato_rest_duration, 0);
-		staccato_rest_duration = 0;
-		return;
-	}
+  // if we are playing staccato, after every note we play a rest
+  if(staccato && staccato_rest_duration)
+  {
+    ZumoBuzzer::playNote(SILENT_NOTE, staccato_rest_duration, 0);
+    staccato_rest_duration = 0;
+    return;
+  }
 
  parse_character:
 
-	// Get current character
-	c = currentCharacter();
-	buzzerSequence ++;
+  // Get current character
+  c = currentCharacter();
+  buzzerSequence ++;
 
-	// Interpret the character.
-	switch(c)
-	{
-	case '>':
-		// shift the octave temporarily up
-		tmp_octave ++;
-		goto parse_character;
-	case '<':
-		// shift the octave temporarily down
-		tmp_octave --;
-		goto parse_character;
-	case 'a':
-		note = NOTE_A(0);
-		break;
-	case 'b':
-		note = NOTE_B(0);
-		break;
-	case 'c':
-		note = NOTE_C(0);
-		break;
-	case 'd':
-		note = NOTE_D(0);
-		break;
-	case 'e':
-		note = NOTE_E(0);
-		break;
-	case 'f':
-		note = NOTE_F(0);
-		break;
-	case 'g':
-		note = NOTE_G(0);
-		break;
-	case 'l':
-		// set the default note duration
-		note_type = getNumber();
-		duration = whole_note_duration/note_type;
-		goto parse_character;
-	case 'm':
-		// set music staccato or legato
-		if(currentCharacter() == 'l')
-			staccato = false;
-		else
-		{
-			staccato = true;
-			staccato_rest_duration = 0;
-		}
-		buzzerSequence ++;
-		goto parse_character;
-	case 'o':
-		// set the octave permanently
-		octave = getNumber();
-		tmp_octave = octave;
-		goto parse_character;
-	case 'r':
-		// Rest - the note value doesn't matter.
-		rest = 1;
-		break;
-	case 't':
-		// set the tempo
-		whole_note_duration = 60*400/getNumber()*10;
-		duration = whole_note_duration/note_type;
-		goto parse_character;
-	case 'v':
-		// set the volume
-		volume = getNumber();
-		goto parse_character;
-	case '!':
-		// reset to defaults
-		octave = 4;
-		whole_note_duration = 2000;
-		note_type = 4;
-		duration = 500;
-		volume = 15;
-		staccato = 0;
-		// reset temp variables that depend on the defaults
-		tmp_octave = octave;
-		tmp_duration = duration;
-		goto parse_character;
-	default:
-		buzzerSequence = 0;
-		return;
-	}
+  // Interpret the character.
+  switch(c)
+  {
+  case '>':
+    // shift the octave temporarily up
+    tmp_octave ++;
+    goto parse_character;
+  case '<':
+    // shift the octave temporarily down
+    tmp_octave --;
+    goto parse_character;
+  case 'a':
+    note = NOTE_A(0);
+    break;
+  case 'b':
+    note = NOTE_B(0);
+    break;
+  case 'c':
+    note = NOTE_C(0);
+    break;
+  case 'd':
+    note = NOTE_D(0);
+    break;
+  case 'e':
+    note = NOTE_E(0);
+    break;
+  case 'f':
+    note = NOTE_F(0);
+    break;
+  case 'g':
+    note = NOTE_G(0);
+    break;
+  case 'l':
+    // set the default note duration
+    note_type = getNumber();
+    duration = whole_note_duration/note_type;
+    goto parse_character;
+  case 'm':
+    // set music staccato or legato
+    if(currentCharacter() == 'l')
+      staccato = false;
+    else
+    {
+      staccato = true;
+      staccato_rest_duration = 0;
+    }
+    buzzerSequence ++;
+    goto parse_character;
+  case 'o':
+    // set the octave permanently
+    octave = getNumber();
+    tmp_octave = octave;
+    goto parse_character;
+  case 'r':
+    // Rest - the note value doesn't matter.
+    rest = 1;
+    break;
+  case 't':
+    // set the tempo
+    whole_note_duration = 60*400/getNumber()*10;
+    duration = whole_note_duration/note_type;
+    goto parse_character;
+  case 'v':
+    // set the volume
+    volume = getNumber();
+    goto parse_character;
+  case '!':
+    // reset to defaults
+    octave = 4;
+    whole_note_duration = 2000;
+    note_type = 4;
+    duration = 500;
+    volume = 15;
+    staccato = 0;
+    // reset temp variables that depend on the defaults
+    tmp_octave = octave;
+    tmp_duration = duration;
+    goto parse_character;
+  default:
+    buzzerSequence = 0;
+    return;
+  }
 
-	note += tmp_octave*12;
+  note += tmp_octave*12;
 
-	// handle sharps and flats
-	c = currentCharacter();
-	while(c == '+' || c == '#')
-	{
-		buzzerSequence ++;
-		note ++;
-		c = currentCharacter();
-	}
-	while(c == '-')
-	{
-		buzzerSequence ++;
-		note --;
-		c = currentCharacter();
-	}
+  // handle sharps and flats
+  c = currentCharacter();
+  while(c == '+' || c == '#')
+  {
+    buzzerSequence ++;
+    note ++;
+    c = currentCharacter();
+  }
+  while(c == '-')
+  {
+    buzzerSequence ++;
+    note --;
+    c = currentCharacter();
+  }
 
-	// set the duration of just this note
-	tmp_duration = duration;
+  // set the duration of just this note
+  tmp_duration = duration;
 
-	// If the input is 'c16', make it a 16th note, etc.
-	if(c > '0' && c < '9')
-		tmp_duration = whole_note_duration/getNumber();
+  // If the input is 'c16', make it a 16th note, etc.
+  if(c > '0' && c < '9')
+    tmp_duration = whole_note_duration/getNumber();
 
-	// Handle dotted notes - the first dot adds 50%, and each
-	// additional dot adds 50% of the previous dot.
-	dot_add = tmp_duration/2;
-	while(currentCharacter() == '.')
-	{
-		buzzerSequence ++;
-		tmp_duration += dot_add;
-		dot_add /= 2;
-	}
+  // Handle dotted notes - the first dot adds 50%, and each
+  // additional dot adds 50% of the previous dot.
+  dot_add = tmp_duration/2;
+  while(currentCharacter() == '.')
+  {
+    buzzerSequence ++;
+    tmp_duration += dot_add;
+    dot_add /= 2;
+  }
 
-	if(staccato)
-	{
-		staccato_rest_duration = tmp_duration / 2;
-		tmp_duration -= staccato_rest_duration;
-	}
-	
-	// this will re-enable the timer1 overflow interrupt
-	OrangutanBuzzer::playNote(rest ? SILENT_NOTE : note, tmp_duration, volume);
+  if(staccato)
+  {
+    staccato_rest_duration = tmp_duration / 2;
+    tmp_duration -= staccato_rest_duration;
+  }
+  
+  // this will re-enable the timer1 overflow interrupt
+  ZumoBuzzer::playNote(rest ? SILENT_NOTE : note, tmp_duration, volume);
 }
 
 
@@ -734,14 +706,14 @@ static void nextNote()
 // Usage: playMode(PLAY_AUTOMATIC) makes it automatic (the
 // default), playMode(PLAY_CHECK) sets it to a mode where you have
 // to call playCheck().
-void OrangutanBuzzer::playMode(unsigned char mode)
+void ZumoBuzzer::playMode(unsigned char mode)
 {
-	play_mode_setting = mode;
+  play_mode_setting = mode;
 
-	// We want to check to make sure that we didn't miss a note if we
-	// are going out of play-check mode.
-	if(mode == PLAY_AUTOMATIC)
-		playCheck();
+  // We want to check to make sure that we didn't miss a note if we
+  // are going out of play-check mode.
+  if(mode == PLAY_AUTOMATIC)
+    playCheck();
 }
 
 
@@ -751,16 +723,9 @@ void OrangutanBuzzer::playMode(unsigned char mode)
 // in your main loop to avoid delays between notes in the sequence.
 //
 // Returns true if it is still playing.
-unsigned char OrangutanBuzzer::playCheck()
+unsigned char ZumoBuzzer::playCheck()
 {
-	if(buzzerFinished && buzzerSequence != 0)
-		nextNote();
-	return buzzerSequence != 0;
+  if(buzzerFinished && buzzerSequence != 0)
+    nextNote();
+  return buzzerSequence != 0;
 }
-
-// Local Variables: **
-// mode: C++ **
-// c-basic-offset: 4 **
-// tab-width: 4 **
-// indent-tabs-mode: t **
-// end: **

@@ -1,12 +1,10 @@
-#include <OrangutanLCD.h>
-#include <OrangutanPushbuttons.h>
-#include <OrangutanBuzzer.h>
+#include <ZumoBuzzer.h>
 
 /*
- * OrangutanBuzzerExample: for the Orangutan SV-xx8, Orangutan LV-168,
+ * ZumoBuzzerExample: for the Orangutan SV-xx8, Orangutan LV-168,
  *    and 3pi robot
  *
- * This example uses the OrangutanBuzzer library to play a series of notes on
+ * This example uses the ZumoBuzzer library to play a series of notes on
  * the buzzer.  It also uses the OrangutanLCD library to display the notes it is
  * playing, and it uses the OrangutanPushbuttons library to allow the user to
  * stop/reset the melody with the top pushbutton.
@@ -61,15 +59,13 @@ unsigned int duration[MELODY_LENGTH] =
   250, 250, 125, 375, 500
 };
 
-OrangutanLCD lcd;
-OrangutanPushbuttons buttons;
-OrangutanBuzzer buzzer;
+ZumoBuzzer buzzer;
 unsigned char currentIdx;
 
 void setup()                    // run once, when the sketch starts
 {
+  digitalWrite(12, HIGH); // enable pullup
   currentIdx = 0;
-  lcd.print("Music!");
 }
 
 void loop()                     // run over and over again
@@ -80,11 +76,6 @@ void loop()                     // run over and over again
   {
     // play note at max volume
     buzzer.playNote(note[currentIdx], duration[currentIdx], 15);
-    
-    // optional LCD feedback (for fun)
-    lcd.gotoXY(0, 1);                           // go to start of the second LCD line
-    lcd.print((unsigned int)note[currentIdx]);  // print integer value of the current note
-    lcd.print("  ");                            // overwrite any left over characters
     currentIdx++;
   }
 
@@ -94,13 +85,13 @@ void loop()                     // run over and over again
   // between the notes.
   
   // For example, let the top user pushbutton function as a stop/reset melody button
-  if (buttons.isPressed(TOP_BUTTON))
+  if (!digitalRead(12))
   {
     buzzer.stopPlaying(); // silence the buzzer
     if (currentIdx < MELODY_LENGTH)
       currentIdx = MELODY_LENGTH;        // terminate the melody
     else
       currentIdx = 0;                    // restart the melody
-    buttons.waitForRelease(TOP_BUTTON);  // wait here for the button to be released
+    while (!digitalRead(12));  // wait here for the button to be released
   }
 }
