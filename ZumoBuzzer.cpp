@@ -55,7 +55,7 @@
 
 static const unsigned int cs2_divider[] = {0, 1, 8, 32, 64, 128, 256, 1024};
 
-#define ENABLE_TIMER_INTERRUPT()   TIMSK2 = (1 << OCIE2B | 1 << TOIE2)
+#define ENABLE_TIMER_INTERRUPT()   TIMSK2 = (1 << TOIE2)
 #define DISABLE_TIMER_INTERRUPT()  TIMSK2 = 0
 
 #endif
@@ -130,11 +130,6 @@ ISR (TIMER2_OVF_vect)
   }
 }
 
-ISR (TIMER2_COMPB_vect)
-{
-  PINB = BUZZER;
-}
-
 #endif
 
 
@@ -200,7 +195,7 @@ void ZumoBuzzer::init2()
   TC4H = 0;                             // 0% duty cycle: top 2 bits...
   OCR4D = 0;                            // and bottom 8 bits
 #else
-  TCCR2A = 0x01;  // bits 7 and 6 clear: normal port op., OC4A disconnected
+  TCCR2A = 0x21;  // bits 7 and 6 clear: normal port op., OC4A disconnected
                   // bit 5 set, 4 clear: clear OC2B on comp match when upcounting, 
                   //                     set OC2B on comp match when downcounting
                   // bits 3 and 2: not used

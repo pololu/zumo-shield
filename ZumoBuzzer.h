@@ -74,8 +74,8 @@
 
 #else // 328P: PD3 (OC2B)
 
-#define BUZZER_DDR  DDRB
-#define BUZZER      (1 << PORTB3)
+#define BUZZER_DDR  DDRD
+#define BUZZER      (1 << PORTD3)
 
 #endif
 
