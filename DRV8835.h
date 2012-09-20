@@ -15,7 +15,8 @@ class DRV8835
     void setMBSpeed(int speed); // Set speed for M2.
     void setSpeeds(int mASpeed, int mBSpeed); // Set speed for both M1 and M2.
     
-    unsigned char flipDirections;
+    unsigned char flipRightMotor;
+    unsigned char flipLeftMotor;
     
   private:
     static const unsigned char _APHASE = 7;

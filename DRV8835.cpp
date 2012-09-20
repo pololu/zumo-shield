@@ -4,7 +4,8 @@
 
 DRV8835::DRV8835()
 {
-  flipDirections = 0;
+  flipRightMotor = 0;
+  flipLeftMotor = 0;
 }
 
 // Public Methods //////////////////////////////////////////////////////////////
@@ -45,7 +46,7 @@ void DRV8835::setMASpeed(int speed)
   #else
   //analogWrite(_PWM1,speed * 51 / 80); // default to using analogWrite, mapping 400 to 255
   #endif
-  if (reverse ^ flipDirections)
+  if (reverse ^ flipRightMotor)
   {
     digitalWrite(_APHASE, HIGH);
   }
@@ -72,7 +73,7 @@ void DRV8835::setMBSpeed(int speed)
   #else
   //analogWrite(_PWM2,speed * 51 / 80); // default to using analogWrite, mapping 400 to 255
   #endif 
-  if (reverse ^ flipDirections)
+  if (reverse ^ flipLeftMotor)
   {
     digitalWrite(_BPHASE, HIGH);
   }
