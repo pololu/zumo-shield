@@ -7,21 +7,19 @@ class DRV8835
 {
   public:  
     // CONSTRUCTORS
-    DRV8835();
+    DRV8835(); // default pins
+    DRV8835(unsigned char APHASE, unsigned char BPHASE);
     
     // PUBLIC METHODS
-    void init(); // Initialize TIMER 1, set the PWM to 20kHZ.
-    void setMASpeed(int speed); // Set speed for M1.
-    void setMBSpeed(int speed); // Set speed for M2.
+    void init(); // Initialize TIMER 1, set the PWM to 20kHz.
+    void setMASpeed(int speed); // Set speed for motor A.
+    void setMBSpeed(int speed); // Set speed for motor B.
     void setSpeeds(int mASpeed, int mBSpeed); // Set speed for both M1 and M2.
     
-    unsigned char flipRightMotor;
-    unsigned char flipLeftMotor;
-    
   private:
-    static const unsigned char _APHASE = 7;
+    unsigned char _APHASE;
     static const unsigned char _AENABLE = 9;
-    static const unsigned char _BPHASE = 8;
+    unsigned char _BPHASE;
     static const unsigned char _BENABLE = 10;
 };
 

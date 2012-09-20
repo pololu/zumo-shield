@@ -4,8 +4,15 @@
 
 DRV8835::DRV8835()
 {
-  flipRightMotor = 0;
-  flipLeftMotor = 0;
+  _APHASE = 7;
+  _BPHASE = 8;
+}
+
+DRV8835::DRV8835(unsigned char APHASE, unsigned char BPHASE)
+{
+  // AENABLE and BENABLE cannot be remapped because the library assumes PWM is on Timer1
+  _APHASE = APHASE;
+  _BPHASE = BPHASE;
 }
 
 // Public Methods //////////////////////////////////////////////////////////////
@@ -16,6 +23,7 @@ void DRV8835::init()
   pinMode(_BPHASE,  OUTPUT);
   pinMode(_BENABLE, OUTPUT);
 
+#if defined(__AVR_ATmega168__) || defined(__AVR_ATmega328P__) || defined (__AVR_ATmega32U4__)
   // Timer 1 configuration
   // prescaler: clockI/O / 1
   // outputs enabled
@@ -27,9 +35,10 @@ void DRV8835::init()
   TCCR1A = 0b10100000;
   TCCR1B = 0b00010001;
   ICR1 = 400;
+#endif
 }
 
-// Set speed for motor 1, speed is a number betwenn -400 and 400
+// Set speed for motor A; speed is a number between -400 and 400
 void DRV8835::setMASpeed(int speed)
 {
   unsigned char reverse = 0;
@@ -41,12 +50,12 @@ void DRV8835::setMASpeed(int speed)
   }
   if (speed > 400)  // Max PWM dutycycle
     speed = 400;
-  #if defined(__AVR_ATmega168__)|| defined(__AVR_ATmega328P__)
+#if defined(__AVR_ATmega168__) || defined(__AVR_ATmega328P__) || defined (__AVR_ATmega32U4__)
   OCR1A = speed;
-  #else
-  //analogWrite(_PWM1,speed * 51 / 80); // default to using analogWrite, mapping 400 to 255
-  #endif
-  if (reverse ^ flipRightMotor)
+#else
+  analogWrite(_AENABLE, speed * 51 / 80); // default to using analogWrite, mapping 400 to 255
+#endif
+  if (reverse)
   {
     digitalWrite(_APHASE, HIGH);
   }
@@ -56,7 +65,7 @@ void DRV8835::setMASpeed(int speed)
   }
 }
 
-// Set speed for motor 2, speed is a number betwenn -400 and 400
+// Set speed for motor B; speed is a number between -400 and 400
 void DRV8835::setMBSpeed(int speed)
 {
   unsigned char reverse = 0;
@@ -68,12 +77,12 @@ void DRV8835::setMBSpeed(int speed)
   }
   if (speed > 400)  // Max 
     speed = 400;
-  #if defined(__AVR_ATmega168__)|| defined(__AVR_ATmega328P__)
+#if defined(__AVR_ATmega168__) || defined(__AVR_ATmega328P__) || defined (__AVR_ATmega32U4__)
   OCR1B = speed;
-  #else
-  //analogWrite(_PWM2,speed * 51 / 80); // default to using analogWrite, mapping 400 to 255
-  #endif 
-  if (reverse ^ flipLeftMotor)
+#else
+  analogWrite(_BENABLE, speed * 51 / 80); // default to using analogWrite, mapping 400 to 255
+#endif 
+  if (reverse)
   {
     digitalWrite(_BPHASE, HIGH);
   }
@@ -83,7 +92,7 @@ void DRV8835::setMBSpeed(int speed)
   }
 }
 
-// Set speed for motor 1 and 2
+// Set speed for motors A and B
 void DRV8835::setSpeeds(int mASpeed, int mBSpeed)
 {
   setMASpeed(mASpeed);
