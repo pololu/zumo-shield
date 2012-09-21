@@ -1,8 +1,6 @@
 #ifndef DRV8835_h
 #define DRV8835_h
 
-#include <Arduino.h>
-
 class DRV8835
 {
   public:  
@@ -12,9 +10,9 @@ class DRV8835
     
     // PUBLIC METHODS
     void init(); // Initialize TIMER 1, set the PWM to 20kHz.
-    void setMASpeed(int speed); // Set speed for motor A.
-    void setMBSpeed(int speed); // Set speed for motor B.
-    void setSpeeds(int mASpeed, int mBSpeed); // Set speed for both M1 and M2.
+    void setASpeed(int speed); // Set speed for motor A.
+    void setBSpeed(int speed); // Set speed for motor B.
+    void setSpeeds(int mASpeed, int mBSpeed); // Set speed for both motors A and B.
     
   private:
     unsigned char _APHASE;

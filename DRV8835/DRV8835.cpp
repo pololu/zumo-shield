@@ -1,4 +1,5 @@
 #include "DRV8835.h"
+#include <Arduino.h>
 
 // Constructors ////////////////////////////////////////////////////////////////
 
@@ -39,7 +40,7 @@ void DRV8835::init()
 }
 
 // Set speed for motor A; speed is a number between -400 and 400
-void DRV8835::setMASpeed(int speed)
+void DRV8835::setASpeed(int speed)
 {
   unsigned char reverse = 0;
   
@@ -66,7 +67,7 @@ void DRV8835::setMASpeed(int speed)
 }
 
 // Set speed for motor B; speed is a number between -400 and 400
-void DRV8835::setMBSpeed(int speed)
+void DRV8835::setBSpeed(int speed)
 {
   unsigned char reverse = 0;
   
@@ -95,6 +96,6 @@ void DRV8835::setMBSpeed(int speed)
 // Set speed for motors A and B
 void DRV8835::setSpeeds(int mASpeed, int mBSpeed)
 {
-  setMASpeed(mASpeed);
-  setMBSpeed(mBSpeed);
+  setASpeed(mASpeed);
+  setBSpeed(mBSpeed);
 }

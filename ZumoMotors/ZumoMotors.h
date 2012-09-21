@@ -1,28 +1,22 @@
-#ifndef DRV8835_h
-#define DRV8835_h
+#ifndef ZumoMotors_h
+#define ZumoMotors_h
 
 #include <Arduino.h>
+#include "../DRV8835/DRV8835.h"
 
-class DRV8835
+class ZumoMotors : public DRV8835
 {
   public:  
     // CONSTRUCTORS
-    DRV8835();
+    ZumoMotors();
     
     // PUBLIC METHODS
-    void init(); // Initialize TIMER 1, set the PWM to 20kHZ.
-    void setMASpeed(int speed); // Set speed for M1.
-    void setMBSpeed(int speed); // Set speed for M2.
-    void setSpeeds(int mASpeed, int mBSpeed); // Set speed for both M1 and M2.
+    void setLeftSpeed(int speed); // Set speed for left motor.
+    void setRightSpeed(int speed); // Set speed for right motor.
+    void setSpeeds(int leftSpeed, int rightSpeed); // Set speed for both left and right motors.
     
-    unsigned char flipRightMotor;
-    unsigned char flipLeftMotor;
-    
-  private:
-    static const unsigned char _APHASE = 7;
-    static const unsigned char _AENABLE = 9;
-    static const unsigned char _BPHASE = 8;
-    static const unsigned char _BENABLE = 10;
+    boolean flipRightMotor;
+    boolean flipLeftMotor;
 };
 
 #endif

@@ -6,13 +6,13 @@
  */
 
 
-#include <DRV8835.h>
+#include <ZumoMotors.h>
 
-DRV8835 drv;
+ZumoMotors motors;
 
 void setup() {
-  drv.init();
-  drv.flipDirections = 1; // change this if motor directions are wrong
+  motors.init();
+  //drv.flipDirections = 1; // change this if motor directions are wrong
 }
 
 void loop() {
@@ -25,38 +25,38 @@ void loop() {
   // run right motor
   for (int foo = 0; foo <= 400; foo++)
   {
-    drv.setSpeeds(foo, 0);
+    motors.setRightSpeed(foo);
     delay(1);
   }
   
   for (int foo = 400; foo >= -400; foo--)
   {
-    drv.setSpeeds(foo, 0);
+    motors.setRightSpeed(foo);
     delay(1);
   }
   
   for (int foo = -400; foo <= 0; foo++)
   {
-    drv.setSpeeds(foo, 0);
+    motors.setRightSpeed(foo);
     delay(1);
   }
   
   // run left motor
   for (int foo = 0; foo <= 400; foo++)
   {
-    drv.setSpeeds(0, foo);
+    motors.setLeftSpeed(foo);
     delay(1);
   }
   
   for (int foo = 400; foo >= -400; foo--)
   {
-    drv.setSpeeds(0, foo);
+    motors.setLeftSpeed(foo);
     delay(1);
   }
   
   for (int foo = -400; foo <= 0; foo++)
   {
-    drv.setSpeeds(0, foo);
+    motors.setLeftSpeed(foo);
     delay(1);
   }
 }
