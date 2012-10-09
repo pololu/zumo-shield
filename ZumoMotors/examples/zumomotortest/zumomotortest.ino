@@ -1,18 +1,15 @@
 /* 
- * motor A is right motor
- * motor B is left motor
- * setSpeeds usage: setSpeeds(rightSpeed, leftSpeed); speed range is -400 to 400
- * change flipDirections if directions are wrong
+ * range of valid speeds is -400 to 400
  */
 
-
+#include <DRV8835.h>
 #include <ZumoMotors.h>
 
 ZumoMotors motors;
 
 void setup() {
   motors.init();
-  //drv.flipDirections = 1; // change this if motor directions are wrong
+  pinMode(13, OUTPUT);
 }
 
 void loop() {
@@ -23,40 +20,40 @@ void loop() {
   delay(100);
   
   // run right motor
-  for (int foo = 0; foo <= 400; foo++)
+  for (int speed = 0; speed <= 400; speed++)
   {
-    motors.setRightSpeed(foo);
+    motors.setRightSpeed(speed);
     delay(1);
   }
   
-  for (int foo = 400; foo >= -400; foo--)
+  for (int speed = 400; speed >= -400; speed--)
   {
-    motors.setRightSpeed(foo);
+    motors.setRightSpeed(speed);
     delay(1);
   }
   
-  for (int foo = -400; foo <= 0; foo++)
+  for (int speed = -400; speed <= 0; speed++)
   {
-    motors.setRightSpeed(foo);
+    motors.setRightSpeed(speed);
     delay(1);
   }
   
   // run left motor
-  for (int foo = 0; foo <= 400; foo++)
+  for (int speed = 0; speed <= 400; speed++)
   {
-    motors.setLeftSpeed(foo);
+    motors.setLeftSpeed(speed);
     delay(1);
   }
   
-  for (int foo = 400; foo >= -400; foo--)
+  for (int speed = 400; speed >= -400; speed--)
   {
-    motors.setLeftSpeed(foo);
+    motors.setLeftSpeed(speed);
     delay(1);
   }
   
-  for (int foo = -400; foo <= 0; foo++)
+  for (int speed = -400; speed <= 0; speed++)
   {
-    motors.setLeftSpeed(foo);
+    motors.setLeftSpeed(speed);
     delay(1);
   }
 }
