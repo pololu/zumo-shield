@@ -1,6 +1,10 @@
 #include "DRV8835.h"
 #include <Arduino.h>
 
+#if defined(__AVR_ATmega168__) || defined(__AVR_ATmega328P__) || defined (__AVR_ATmega32U4__)
+  #define _DRV_HARDWARE_PWM
+#endif
+
 // Constructors ////////////////////////////////////////////////////////////////
 
 DRV8835::DRV8835()
@@ -24,7 +28,7 @@ void DRV8835::init()
   pinMode(_BPHASE,  OUTPUT);
   pinMode(_BENABLE, OUTPUT);
 
-#if defined(__AVR_ATmega168__) || defined(__AVR_ATmega328P__) || defined (__AVR_ATmega32U4__)
+#ifdef _DRV_HARDWARE_PWM
   // Timer 1 configuration
   // prescaler: clockI/O / 1
   // outputs enabled
@@ -51,7 +55,7 @@ void DRV8835::setASpeed(int speed)
   }
   if (speed > 400)  // Max PWM dutycycle
     speed = 400;
-#if defined(__AVR_ATmega168__) || defined(__AVR_ATmega328P__) || defined (__AVR_ATmega32U4__)
+#if _DRV_HARDWARE_PWM
   OCR1A = speed;
 #else
   analogWrite(_AENABLE, speed * 51 / 80); // default to using analogWrite, mapping 400 to 255
@@ -78,7 +82,7 @@ void DRV8835::setBSpeed(int speed)
   }
   if (speed > 400)  // Max 
     speed = 400;
-#if defined(__AVR_ATmega168__) || defined(__AVR_ATmega328P__) || defined (__AVR_ATmega32U4__)
+#if _DRV_HARDWARE_PWM
   OCR1B = speed;
 #else
   analogWrite(_BENABLE, speed * 51 / 80); // default to using analogWrite, mapping 400 to 255
