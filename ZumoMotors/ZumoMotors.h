@@ -17,6 +17,23 @@ class ZumoMotors : public DRV8835
     
     boolean flipRightMotor;
     boolean flipLeftMotor;
+  
+  private:
+    // PRIVATE METHODS
+    inline void init()
+    {
+      unsigned char initialized = 0;
+
+      if (!initialized)
+      {
+        initialized = 1;
+        DRV8835::init();
+      }
+    }
+    
+    // hide A/B functions by making them private
+    DRV8835::setASpeed;
+    DRV8835::setBSpeed;
 };
 
 #endif

@@ -55,7 +55,7 @@ void DRV8835::setASpeed(int speed)
   }
   if (speed > 400)  // Max PWM dutycycle
     speed = 400;
-#if _DRV_HARDWARE_PWM
+#ifdef _DRV_HARDWARE_PWM
   OCR1A = speed;
 #else
   analogWrite(_AENABLE, speed * 51 / 80); // default to using analogWrite, mapping 400 to 255
@@ -82,7 +82,7 @@ void DRV8835::setBSpeed(int speed)
   }
   if (speed > 400)  // Max 
     speed = 400;
-#if _DRV_HARDWARE_PWM
+#ifdef _DRV_HARDWARE_PWM
   OCR1B = speed;
 #else
   analogWrite(_BENABLE, speed * 51 / 80); // default to using analogWrite, mapping 400 to 255

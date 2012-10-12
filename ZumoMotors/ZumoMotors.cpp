@@ -13,6 +13,8 @@ ZumoMotors::ZumoMotors()
 // Set speed for left motor; speed is a number between -400 and 400
 void ZumoMotors::setLeftSpeed(int speed)
 {
+  init();
+  
   if (flipLeftMotor)
     speed = -speed;
     
@@ -22,6 +24,8 @@ void ZumoMotors::setLeftSpeed(int speed)
 // Set speed for right motor; speed is a number between -400 and 400
 void ZumoMotors::setRightSpeed(int speed)
 {
+  init();
+  
   if (flipRightMotor)
     speed = -speed;
     
