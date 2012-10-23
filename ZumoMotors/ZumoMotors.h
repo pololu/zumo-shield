@@ -2,15 +2,13 @@
 #define ZumoMotors_h
 
 #include <Arduino.h>
-#include "../DRV8835/DRV8835.h"
 
-class ZumoMotors : public DRV8835
+class ZumoMotors
 {
   public:  
-    // CONSTRUCTORS
+
     ZumoMotors();
     
-    // PUBLIC METHODS
     void setLeftSpeed(int speed); // Set speed for left motor.
     void setRightSpeed(int speed); // Set speed for right motor.
     void setSpeeds(int leftSpeed, int rightSpeed); // Set speed for both left and right motors.
@@ -19,21 +17,20 @@ class ZumoMotors : public DRV8835
     boolean flipLeftMotor;
   
   private:
-    // PRIVATE METHODS
-    inline void init()
+
+    static inline void init()
     {
-      unsigned char initialized = 0;
+      static unsigned char initialized = 0;
 
       if (!initialized)
       {
         initialized = 1;
-        DRV8835::init();
+        init2();
       }
     }
     
-    // hide A/B functions by making them private
-    DRV8835::setASpeed;
-    DRV8835::setBSpeed;
+    // initializes timer1 for proper PWM generation
+    static void init2();
 };
 
 #endif
