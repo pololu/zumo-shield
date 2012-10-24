@@ -12,7 +12,7 @@
 static boolean flipLeft = false;
 static boolean flipRight = false;
 
-// constructor
+// constructor (doesn't do anything)
 ZumoMotors::ZumoMotors()
 {
 }
@@ -40,17 +40,19 @@ void ZumoMotors::init2()
 #endif
 }
 
+// enable/disable flipping of left motor
 void ZumoMotors::flipLeftMotor(boolean flip)
 {
   flipLeft = flip;
 }
 
+// enable/disable flipping of right motor
 void ZumoMotors::flipRightMotor(boolean flip)
 {
   flipRight = flip;
 }
 
-// Set speed for left motor; speed is a number between -400 and 400
+// set speed for left motor; speed is a number between -400 and 400
 void ZumoMotors::setLeftSpeed(int speed)
 {
   init(); // initialize if necessary
@@ -77,7 +79,7 @@ void ZumoMotors::setLeftSpeed(int speed)
     digitalWrite(DIR_L, LOW);
 }
 
-// Set speed for right motor; speed is a number between -400 and 400
+// set speed for right motor; speed is a number between -400 and 400
 void ZumoMotors::setRightSpeed(int speed)
 {
   init(); // initialize if necessary
@@ -104,7 +106,7 @@ void ZumoMotors::setRightSpeed(int speed)
     digitalWrite(DIR_R, LOW);
 }
 
-// Set speed for both motors
+// set speed for both motors
 void ZumoMotors::setSpeeds(int leftSpeed, int rightSpeed)
 {
   setLeftSpeed(leftSpeed);

@@ -1,5 +1,7 @@
 #include "Pushbutton.h"
 
+// constructor; takes arguments specifying whether to enable internal pull-up
+// and the default state of the pin that the button is connected to
 Pushbutton::Pushbutton(unsigned char pin, unsigned char pullUp, unsigned char defaultState)
 {
   _pin = pin;
@@ -7,6 +9,7 @@ Pushbutton::Pushbutton(unsigned char pin, unsigned char pullUp, unsigned char de
   _defaultState = defaultState;
 }
 
+// wait for button to be pressed
 void Pushbutton::waitForPress()
 {
   init(); // initialize if necessary
@@ -19,6 +22,7 @@ void Pushbutton::waitForPress()
   while (!_isPressed());   // if button isn't still pressed, loop
 }
 
+// wait for button to be released
 void Pushbutton::waitForRelease()
 {
   init(); // initialize if necessary
@@ -31,14 +35,14 @@ void Pushbutton::waitForRelease()
   while (_isPressed());   // if button isn't still released, loop
 }
 
+// wait for button to be pressed, then released
 void Pushbutton::waitForButton()
 {
   waitForPress();
   waitForRelease();
 }
 
-// returns boolean indicating whether button is pressed
-// button is pressed if it's pulled up but reads low OR if it's pulled down but reads high
+// indicates whether button is pressed
 boolean Pushbutton::isPressed()
 {
   init(); // initialize if necessary
@@ -46,6 +50,11 @@ boolean Pushbutton::isPressed()
   return _isPressed();
 }
 
+// Uses a finite state machine to detect a single button press and returns
+// true to indicate the press (false otherwise).  It requires the button to be
+// released for at least 15 ms and then pressed for at least 15 ms before
+// reporting the press.  This function handles all necessary debouncing and
+// should be called repeatedly in a loop.
 boolean Pushbutton::getSingleDebouncedPress()
 {
   static unsigned char state = 0;
@@ -100,6 +109,11 @@ boolean Pushbutton::getSingleDebouncedPress()
   return false;
 }
 
+// Uses a finite state machine to detect a single button release and returns
+// true to indicate the release (false otherwise).  It requires the button to be
+// pressed for at least 15 ms and then released for at least 15 ms before
+// reporting the release.  This function handles all necessary debouncing and
+// should be called repeatedly in a loop.
 boolean Pushbutton::getSingleDebouncedRelease()
 {
   static unsigned char state = 0;
@@ -154,6 +168,7 @@ boolean Pushbutton::getSingleDebouncedRelease()
   return false;
 }
 
+// initializes I/O pin for use as button inputs
 void Pushbutton::init2()
 {
   if (_pullUp == PULL_UP_ENABLED)
@@ -164,7 +179,8 @@ void Pushbutton::init2()
   delayMicroseconds(5); // give pull-up time to stabilize
 }
 
+// button is pressed if pin state differs from default state
 inline boolean Pushbutton::_isPressed()
 {
-  return (digitalRead(_pin) == LOW) ^ (_defaultState == LOW); 
+  return (digitalRead(_pin) == LOW) ^ (_defaultState == DEFAULT_STATE_LOW); 
 }

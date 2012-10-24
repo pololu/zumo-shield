@@ -6,15 +6,18 @@
 class ZumoMotors
 {
   public:  
-
+  
+    // constructor (doesn't do anything)
     ZumoMotors();
     
+    // enable/disable flipping of motors
     static void flipLeftMotor(boolean flip);
     static void flipRightMotor(boolean flip);
     
-    static void setLeftSpeed(int speed); // Set speed for left motor.
-    static void setRightSpeed(int speed); // Set speed for right motor.
-    static void setSpeeds(int leftSpeed, int rightSpeed); // Set speed for both left and right motors.
+    // set speed for left, right, or both motors
+    static void setLeftSpeed(int speed);
+    static void setRightSpeed(int speed);
+    static void setSpeeds(int leftSpeed, int rightSpeed);
     
   private:
 
