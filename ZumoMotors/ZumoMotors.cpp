@@ -53,7 +53,7 @@ void ZumoMotors::flipRightMotor(boolean flip)
 // Set speed for left motor; speed is a number between -400 and 400
 void ZumoMotors::setLeftSpeed(int speed)
 {
-  init();
+  init(); // initialize if necessary
     
   boolean reverse = 0;
   
@@ -80,7 +80,7 @@ void ZumoMotors::setLeftSpeed(int speed)
 // Set speed for right motor; speed is a number between -400 and 400
 void ZumoMotors::setRightSpeed(int speed)
 {
-  init();
+  init(); // initialize if necessary
     
   boolean reverse = 0;
   

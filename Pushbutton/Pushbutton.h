@@ -26,9 +26,20 @@ class Pushbutton
     
   private:
   
-    unsigned char type;
+    unsigned char _pin;
+    unsigned char _type;
     
-    void init();
+    inline void init()
+    {
+      static boolean initialized = false;
+
+      if (!initialized)
+      {
+        initialized = true;
+        init2();
+      }
+    }
+    
     void init2();
 };
 
