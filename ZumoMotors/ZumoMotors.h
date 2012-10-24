@@ -9,22 +9,22 @@ class ZumoMotors
 
     ZumoMotors();
     
-    void setLeftSpeed(int speed); // Set speed for left motor.
-    void setRightSpeed(int speed); // Set speed for right motor.
-    void setSpeeds(int leftSpeed, int rightSpeed); // Set speed for both left and right motors.
+    static void flipLeftMotor(boolean flip);
+    static void flipRightMotor(boolean flip);
     
-    boolean flipRightMotor;
-    boolean flipLeftMotor;
-  
+    static void setLeftSpeed(int speed); // Set speed for left motor.
+    static void setRightSpeed(int speed); // Set speed for right motor.
+    static void setSpeeds(int leftSpeed, int rightSpeed); // Set speed for both left and right motors.
+    
   private:
 
     static inline void init()
     {
-      static unsigned char initialized = 0;
+      static boolean initialized = false;
 
       if (!initialized)
       {
-        initialized = 1;
+        initialized = true;
         init2();
       }
     }

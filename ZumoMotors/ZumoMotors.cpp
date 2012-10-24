@@ -9,11 +9,12 @@
   #define USE_20KHZ_PWM
 #endif
 
+static boolean flipLeft = false;
+static boolean flipRight = false;
+
 // constructor
 ZumoMotors::ZumoMotors()
 {
-  flipRightMotor = false;
-  flipLeftMotor = false;
 }
 
 // initialize timer1 to generate the proper PWM outputs to the motor drivers
@@ -39,12 +40,22 @@ void ZumoMotors::init2()
 #endif
 }
 
+void ZumoMotors::flipLeftMotor(boolean flip)
+{
+  flipLeft = flip;
+}
+
+void ZumoMotors::flipRightMotor(boolean flip)
+{
+  flipRight = flip;
+}
+
 // Set speed for left motor; speed is a number between -400 and 400
 void ZumoMotors::setLeftSpeed(int speed)
 {
   init();
     
-  unsigned char reverse = 0;
+  boolean reverse = 0;
   
   if (speed < 0)
   {
@@ -60,7 +71,7 @@ void ZumoMotors::setLeftSpeed(int speed)
   analogWrite(PWM_L, speed * 51 / 80); // default to using analogWrite, mapping 400 to 255
 #endif 
 
-  if (reverse ^ flipLeftMotor) // flip if speed was negative or flipLeftMotor setting is active, but not both
+  if (reverse ^ flipLeft) // flip if speed was negative or flipLeft setting is active, but not both
     digitalWrite(DIR_L, HIGH);
   else
     digitalWrite(DIR_L, LOW);
@@ -71,7 +82,7 @@ void ZumoMotors::setRightSpeed(int speed)
 {
   init();
     
-  unsigned char reverse = 0;
+  boolean reverse = 0;
   
   if (speed < 0)
   {
@@ -87,7 +98,7 @@ void ZumoMotors::setRightSpeed(int speed)
   analogWrite(PWM_R, speed * 51 / 80); // default to using analogWrite, mapping 400 to 255
 #endif
 
-  if (reverse ^ flipRightMotor)
+  if (reverse ^ flipRight) // flip if speed was negative or flipRight setting is active, but not both
     digitalWrite(DIR_R, HIGH);
   else
     digitalWrite(DIR_R, LOW);

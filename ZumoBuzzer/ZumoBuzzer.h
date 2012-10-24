@@ -1,33 +1,3 @@
-/*
-  ZumoBuzzer.h - Library for controlling the buzzer on the Orangutan LV,
-    SV, SVP, or 3pi robot. This library uses a timer1 PWM to generate the note
-  frequencies and timer1 overflow interrupt to time the duration of the
-  notes, so the buzzer can be playing a melody in the background while
-  the rest of your code executes. This library relies on Timer1, so it will
-  conflict with any other libraries that use Timer1 (e.g. OrangutanServos).
-  You cannot use the OrangutanServos library to control servos while using
-  the ZumoBuzzer library to play music.
-*/
-
-/*
- * Written by Ben Schmidel et al., May 23, 2008.
- * Copyright (c) 2008-2011 Pololu Corporation. For more information, see
- *
- *   http://www.pololu.com
- *   http://forum.pololu.com
- *   http://www.pololu.com/docs/0J18
- *
- * You may freely modify and share this code, as long as you keep this
- * notice intact (including the two links above).  Licensed under the
- * Creative Commons BY-SA 3.0 license:
- *
- *   http://creativecommons.org/licenses/by-sa/3.0/
- *
- * Disclaimer: To the extent permitted by law, Pololu provides this work
- * without any warranty.  It might be defective, in which case you agree
- * to be responsible for all resulting costs and damages.
- */
- 
 #ifndef ZumoBuzzer_h
 #define ZumoBuzzer_h
 
@@ -65,19 +35,6 @@
 #define SILENT_NOTE   0xFF  // this note will silence the buzzer
 
 #define DIV_BY_10     (1 << 15) // frequency bit that indicates Hz/10
-
-
-#if defined(__AVR_ATmega32U4__) // PD7 (OC4D)
-
-#define BUZZER_DDR  DDRD
-#define BUZZER      (1 << PORTD7)
-
-#else // 328P: PD3 (OC2B)
-
-#define BUZZER_DDR  DDRD
-#define BUZZER      (1 << PORTD3)
-
-#endif
 
 class ZumoBuzzer
 {

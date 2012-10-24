@@ -2,14 +2,14 @@
  * range of valid speeds is -400 to 400
  */
 
-#include <DRV8835.h>
 #include <ZumoMotors.h>
 
 ZumoMotors motors;
 
 void setup() {
-  motors.init();
   pinMode(13, OUTPUT);
+  motors.flipLeftMotor(false);
+  motors.flipRightMotor(false);
 }
 
 void loop() {
