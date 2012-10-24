@@ -1,12 +1,10 @@
 #include "Pushbutton.h"
 
-#define BUTTON_IS_DOWN ((digitalRead(_pin) == LOW)  ^ (_type == PULL_DOWN_EXTERNAL))
-#define BUTTON_IS_UP   ((digitalRead(_pin) == HIGH) ^ (_type == PULL_DOWN_EXTERNAL))
-
-Pushbutton::Pushbutton(unsigned char pin, unsigned char type)
+Pushbutton::Pushbutton(unsigned char pin, unsigned char pullUp, unsigned char defaultState)
 {
   _pin = pin;
-  _type = type;
+  _pullUp = pullUp;
+  _defaultState = defaultState;
 }
 
 void Pushbutton::waitForPress()
@@ -15,10 +13,10 @@ void Pushbutton::waitForPress()
   
   do
   {
-    while (BUTTON_IS_UP); // wait for button to be pressed
+    while (!_isPressed()); // wait for button to be pressed
     delay(10);            // debounce the button press
   }
-  while (BUTTON_IS_UP);   // if button isn't still pressed, loop
+  while (!_isPressed());   // if button isn't still pressed, loop
 }
 
 void Pushbutton::waitForRelease()
@@ -27,10 +25,10 @@ void Pushbutton::waitForRelease()
   
   do
   {
-    while (BUTTON_IS_DOWN); // wait for button to be released
-    delay(10);              // debounce the button release
+    while (_isPressed()); // wait for button to be released
+    delay(10);           // debounce the button release
   }
-  while (BUTTON_IS_DOWN);   // if button isn't still released, loop
+  while (_isPressed());   // if button isn't still released, loop
 }
 
 void Pushbutton::waitForButton()
@@ -39,9 +37,13 @@ void Pushbutton::waitForButton()
   waitForRelease();
 }
 
+// returns boolean indicating whether button is pressed
+// button is pressed if it's pulled up but reads low OR if it's pulled down but reads high
 boolean Pushbutton::isPressed()
 {
-  return BUTTON_IS_DOWN;
+  init(); // initialize if necessary
+
+  return _isPressed();
 }
 
 boolean Pushbutton::getSingleDebouncedPress()
@@ -56,7 +58,7 @@ boolean Pushbutton::getSingleDebouncedPress()
   switch (state)
   {
     case 0:
-      if (BUTTON_IS_UP)                       // if button is up
+      if (!_isPressed())                       // if button is released
       {
         prevTimeMillis = timeMillis;
         state = 1;                            // proceed to next state
@@ -66,7 +68,7 @@ boolean Pushbutton::getSingleDebouncedPress()
     case 1:
       if (timeMillis - prevTimeMillis >= 15)  // if 15 ms or longer has elapsed
       {
-        if (BUTTON_IS_UP)                     // and button is still up
+        if (!_isPressed())                     // and button is still released
           state = 2;                          // proceed to next state
         else
           state = 0;                          // go back to previous (initial) state
@@ -74,7 +76,7 @@ boolean Pushbutton::getSingleDebouncedPress()
       break;
       
     case 2:
-      if (BUTTON_IS_DOWN)                     // if button is now down
+      if (_isPressed())                        // if button is now pressed
       {
         prevTimeMillis = timeMillis;
         state = 3;                            // proceed to next state
@@ -84,7 +86,7 @@ boolean Pushbutton::getSingleDebouncedPress()
     case 3:
       if (timeMillis - prevTimeMillis >= 15)  // if 15 ms or longer has elapsed
       {
-        if (BUTTON_IS_DOWN)                   // and button is still down
+        if (_isPressed())                      // and button is still pressed
         {
           state = 0;                          // next state becomes initial state
           return true;                        // report button press
@@ -104,13 +106,13 @@ boolean Pushbutton::getSingleDebouncedRelease()
   static unsigned long prevTimeMillis = 0;
   
   unsigned long timeMillis = millis();
-  
+
   init(); // initialize if necessary
   
   switch (state)
   {
     case 0:
-      if (BUTTON_IS_DOWN)                     // if button is down
+      if (_isPressed())                        // if button is pressed
       {
         prevTimeMillis = timeMillis;
         state = 1;                            // proceed to next state
@@ -120,7 +122,7 @@ boolean Pushbutton::getSingleDebouncedRelease()
     case 1:
       if (timeMillis - prevTimeMillis >= 15)  // if 15 ms or longer has elapsed
       {
-        if (BUTTON_IS_DOWN)                   // and button is still down
+        if (_isPressed())                      // and button is still pressed
           state = 2;                          // proceed to next state
         else
           state = 0;                          // go back to previous (initial) state
@@ -128,7 +130,7 @@ boolean Pushbutton::getSingleDebouncedRelease()
       break;
       
     case 2:
-      if (BUTTON_IS_UP)                       // if button is now up
+      if (!_isPressed())                       // if button is now released
       {
         prevTimeMillis = timeMillis;
         state = 3;                            // proceed to next state
@@ -138,7 +140,7 @@ boolean Pushbutton::getSingleDebouncedRelease()
     case 3:
       if (timeMillis - prevTimeMillis >= 15)  // if 15 ms or longer has elapsed
       {
-        if (BUTTON_IS_UP)                     // and button is still up
+        if (!_isPressed())                     // and button is still released
         {
           state = 0;                          // next state becomes initial state
           return true;                        // report button release
@@ -154,10 +156,15 @@ boolean Pushbutton::getSingleDebouncedRelease()
 
 void Pushbutton::init2()
 {
-  if (_type == PULL_UP_INTERNAL)
+  if (_pullUp == PULL_UP_ENABLED)
     pinMode(_pin, INPUT_PULLUP);
   else
     pinMode(_pin, INPUT); // high impedance
     
   delayMicroseconds(5); // give pull-up time to stabilize
+}
+
+inline boolean Pushbutton::_isPressed()
+{
+  return (digitalRead(_pin) == LOW) ^ (_defaultState == LOW); 
 }

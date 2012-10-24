@@ -5,15 +5,17 @@
 
 #define ZUMO_BUTTON 12
 
-#define PULL_UP_INTERNAL   0
-#define PULL_UP_EXTERNAL   1
-#define PULL_DOWN_EXTERNAL 2
+#define PULL_UP_DISABLED    0
+#define PULL_UP_ENABLED     1
+
+#define DEFAULT_STATE_LOW   0
+#define DEFAULT_STATE_HIGH  1
 
 class Pushbutton
 {
   public:
     
-    Pushbutton(unsigned char pin, unsigned char type = PULL_UP_INTERNAL);
+    Pushbutton(unsigned char pin, unsigned char pullUp = PULL_UP_ENABLED, unsigned char defaultState = DEFAULT_STATE_HIGH);
     
     void waitForPress();
     void waitForRelease();
@@ -27,7 +29,8 @@ class Pushbutton
   private:
   
     unsigned char _pin;
-    unsigned char _type;
+    unsigned char _pullUp;
+    unsigned char _defaultState;
     
     inline void init()
     {
@@ -40,7 +43,11 @@ class Pushbutton
       }
     }
     
+    // initializes I/O pins for use as button inputs
     void init2();
+    
+    // behaves the same as isPressed, but skips init
+    boolean _isPressed();
 };
 
 #endif
