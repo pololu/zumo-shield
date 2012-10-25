@@ -1,22 +1,15 @@
 #include <ZumoBuzzer.h>
+#include <Pushbutton.h>
 
 /*
- * ZumoBuzzerExample: for the Orangutan SV-xx8, Orangutan LV-168,
- *    and 3pi robot
- *
  * This example uses the ZumoBuzzer library to play a series of notes on
- * the buzzer.  It also uses the OrangutanLCD library to display the notes it is
- * playing, and it uses the OrangutanPushbuttons library to allow the user to
- * stop/reset the melody with the top pushbutton.
- *
- * http://www.pololu.com/docs/0J17/5.b
- * http://www.pololu.com
- * http://forum.pololu.com
+ * the buzzer.  It also uses Pushbutton library to allow the user to
+ * stop/reset the melody with the user pushbutton.
  */
 
 #define MELODY_LENGTH 95
 
-// These arrays take up a total of 285 bytes of RAM (out of a 1k limit)
+// These arrays take up a total of 285 bytes of RAM (out of a limit of 1k (ATmega168), 2k (ATmega328), or 2.5k(ATmega32U4))
 unsigned char note[MELODY_LENGTH] = 
 {
   NOTE_E(5), SILENT_NOTE, NOTE_E(5), SILENT_NOTE, NOTE_E(5), SILENT_NOTE, NOTE_C(5), NOTE_E(5),
@@ -60,11 +53,11 @@ unsigned int duration[MELODY_LENGTH] =
 };
 
 ZumoBuzzer buzzer;
+Pushbutton button(ZUMO_BUTTON);
 unsigned char currentIdx;
 
 void setup()                    // run once, when the sketch starts
 {
-  digitalWrite(12, HIGH); // enable pullup
   currentIdx = 0;
 }
 
@@ -84,14 +77,14 @@ void loop()                     // run over and over again
   // as long as it executes quickly enough to keep from inserting delays
   // between the notes.
   
-  // For example, let the top user pushbutton function as a stop/reset melody button
-  if (!digitalRead(12))
+  // For example, let the user pushbutton function as a stop/reset melody button
+  if (button.isPressed())
   {
     buzzer.stopPlaying(); // silence the buzzer
     if (currentIdx < MELODY_LENGTH)
       currentIdx = MELODY_LENGTH;        // terminate the melody
     else
       currentIdx = 0;                    // restart the melody
-    while (!digitalRead(12));  // wait here for the button to be released
+    button.waitForRelease();  // wait here for the button to be released
   }
 }
