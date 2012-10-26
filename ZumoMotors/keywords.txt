@@ -1,0 +1,7 @@
+ZumoMotors	KEYWORD1
+
+flipLeftMotor	KEYWORD2
+flipRightMotor	KEYWORD2
+setLeftSpeed	KEYWORD2
+setRightSpeed	KEYWORD2
+setSpeeds	KEYWORD2
