@@ -1,0 +1,27 @@
+h1. Pololu Zumo Shield Libraries
+
+Version: 1.0.0
+Release Date: 2012-11-09
+"www.pololu.com":http://www.pololu.com/
+
+h2. Summary
+
+This is a collection of libraries for the "Arduino":http://pololu.com/catalog/product/2191 that interfaces with the Pololu "Zumo Shield":http://www.pololu.com/catalog/product/2504 and "Zumo robot kit":http://www.pololu.com/catalog/product/2505. These libraries provide functions to help you program an Arduino-controlled Zumo robot.
+
+h2. Getting Started
+
+h3. Software
+
+Download the archive from "GitHub":https://github.com/pololu/zumo-shield-arduino, decompress it, and move each library folder (Pushbutton, ZumoBuzzer, and ZumoMotors) into the "libraries" subdirectory inside your Arduino sketchbook directory. You can view your sketchbook location by selecting File->Preferences in the Arduino environment; if there is not already a "libraries" folder in that location, you should create it yourself. After installing the library, restart the Arduino environment so it can find the Zumo Shield libraries and their examples.
+
+h3. Hardware
+
+The Zumo Shield for Arduino can be purchased on Pololu's website "by itself":http://www.pololu.com/catalog/product/2504 or as part of a "Zumo robot kit for Arduino":http://www.pololu.com/catalog/product/2505. See the "Zumo Shield user's guide":http://www.pololu.com/docs/0J57 for more details.
+
+h2. Using the Zumo Shield Libraries
+
+For more information about the libraries, please see the "Zumo Shield user's guide":http://www.pololu.com/docs/0J57.
+
+h2. Version History
+
+* 1.0.0 (2012-11-09): Original release.
