@@ -28,7 +28,7 @@ or was last seen by sensor 0 before being lost.  5000 means the line is
 directly under sensor 5 or was last seen by sensor 5 before being lost.
 */
 
-ZumoReflectanceSensorArray reflectance;
+ZumoReflectanceSensorArray reflectanceSensors;
 
 // Define an array for holding sensor values.
 #define NUM_SENSORS 6
@@ -36,7 +36,7 @@ unsigned int sensorValues[NUM_SENSORS];
 
 void setup()
 {
-  reflectance.init();
+  reflectanceSensors.init();
 
   delay(500);
   pinMode(13, OUTPUT);
@@ -45,7 +45,7 @@ void setup()
   unsigned long startTime = millis();
   while(millis() - startTime < 10000)   // make the calibration take 10 seconds
   {
-    reflectance.calibrate();
+    reflectanceSensors.calibrate();
   }
   digitalWrite(13, LOW);         // turn off LED to indicate we are through with calibration
 
@@ -53,7 +53,7 @@ void setup()
   Serial.begin(9600);
   for (byte i = 0; i < NUM_SENSORS; i++)
   {
-    Serial.print(reflectance.calibratedMinimumOn[i]);
+    Serial.print(reflectanceSensors.calibratedMinimumOn[i]);
     Serial.print(' ');
   }
   Serial.println();
@@ -61,7 +61,7 @@ void setup()
   // print the calibration maximum values measured when emitters were on
   for (byte i = 0; i < NUM_SENSORS; i++)
   {
-    Serial.print(reflectance.calibratedMaximumOn[i]);
+    Serial.print(reflectanceSensors.calibratedMaximumOn[i]);
     Serial.print(' ');
   }
   Serial.println();
@@ -74,10 +74,10 @@ void loop()
   // read calibrated sensor values and obtain a measure of the line position.
   // Note: the values returned will be incorrect if the sensors have not been properly
   // calibrated during the calibration phase.
-  unsigned int position = reflectance.readLine(sensorValues);
+  unsigned int position = reflectanceSensors.readLine(sensorValues);
 
   // To get raw sensor values instead, call:  
-  //reflectance.read(sensorValues);
+  //reflectanceSensors.read(sensorValues);
 
   for (byte i = 0; i < NUM_SENSORS; i++)
   {
