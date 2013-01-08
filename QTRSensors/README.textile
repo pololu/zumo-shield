@@ -1,0 +1,1 @@
+This library was copied from the "qtr-sensors-arduino repository":https://github.com/pololu/qtr-sensors-arduino.  If you change something here, be sure to change it there as well.
