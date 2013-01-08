@@ -20,7 +20,7 @@ reflectance.readLine(sensorValues).
 The loop function reads the calibrated sensor values.  It also uses the 
 values to estimate the position of a line, in case you are using the Zumo 
 for line following. It prints the sensor values to the serial monitor as 
-numbers from 0 (maximum reflectance) to 9 (minimum reflectance) followed 
+numbers from 0 (maximum reflectance) to 1000 (minimum reflectance) followed 
 by the estimated location of the line as a number from 0 to 5000.  A line 
 position of 1000 means the line is directly under sensor 1, 2000 means 
 directly under sensor 2, etc.  0 means the line is directly under sensor 0 
