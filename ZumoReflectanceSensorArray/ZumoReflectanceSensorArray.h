@@ -13,6 +13,24 @@ class ZumoReflectanceSensorArray : public QTRSensorsRC
 {
   public:
   
+  // if this constructor is used, the user must call init() before using
+  // the methods in this class
+  ZumoReflectanceSensorArray() {}
+  
+  // this constructor calls init with the given emitter pin and default values for other settings
+  ZumoReflectanceSensorArray(unsigned char emitterPin)
+  {
+    init(emitterPin);
+  }
+  
+  // this constructor calls init with all settings as given
+  ZumoReflectanceSensorArray(unsigned char * pins, unsigned char numSensors, unsigned int timeout = 2000,
+    unsigned char emitterPin = ZUMO_SENSOR_ARRAY_DEFAULT_EMITTER_PIN)
+  {
+    QTRSensorsRC::init(pins, numSensors, timeout, emitterPin);
+  }
+  
+  
   /* To disable the emitter control feature, specify QTR_NO_EMITTER_PIN for the first argument. */
   void init(unsigned char emitterPin = ZUMO_SENSOR_ARRAY_DEFAULT_EMITTER_PIN)
   {
