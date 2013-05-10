@@ -1,7 +1,7 @@
 h1. Pololu Zumo Shield Libraries
 
-Version: 1.1.1
-Release Date: 2013-04-17
+Version: 1.1.2
+Release Date: 2013-04-18
 "www.pololu.com":http://www.pololu.com/
 
 h2. Summary
@@ -52,6 +52,7 @@ This library, which can also be found in the "qtr-sensors-arduino repository":ht
 
 h2. Version History
 
-* 1.1.1 (2013-01-07): Added ZumoReflectanceSensorArray constructors with parameters to call init() with and pulled fix from qtr-sensors-arduino 2.0.2.
+* 1.1.2 (2013-04-18): Pulled in QTRSensors version 2.1.0.
+* 1.1.1 (2013-04-17): Added ZumoReflectanceSensorArray constructors with parameters to call init() with and pulled fix from qtr-sensors-arduino 2.0.2.
 * 1.1.0 (2013-01-07): Added ZumoReflectanceSensorArray and QTRSensors libraries.
 * 1.0.0 (2012-11-09): Original release.
