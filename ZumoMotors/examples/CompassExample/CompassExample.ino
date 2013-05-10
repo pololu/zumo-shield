@@ -84,12 +84,14 @@ void setup()
     running_max.x = max(running_max.x, compass.m.x);
     running_max.y = max(running_max.y, compass.m.y);
     
+    Serial.println(index);
+    
     delay(50);
   }
   
   motors.setLeftSpeed(0);
   motors.setRightSpeed(0);
-    
+  
   Serial.print("max.x   ");
   Serial.print(running_max.x);
   Serial.println();
@@ -141,8 +143,6 @@ void loop()
     motors.setSpeeds(SPEED, SPEED);
 
     Serial.print("   Straight");
-    
-
 
       delay(1000);
       
@@ -191,6 +191,28 @@ void turnLeft(int refactor)
   motors.setLeftSpeed(-SPEED*adjust - 100);
 }
 
+int findHeading(LSM303::vector from)
+{
+  LSM303::vector down = {0,0,1};
+  LSM303::vector N; // N is north
+  // shift and scale
+  N.x = (compass.m.x - compass.m_min.x) / (compass.m_max.x - compass.m_min.x) * 2 - 1.0;
+  N.y = (compass.m.y - compass.m_min.y) / (compass.m_max.y - compass.m_min.y) * 2 - 1.0;
+  N.z = 0;
+
+  LSM303::vector_normalize(&N);
+
+  // compute E and N
+  LSM303::vector E;
+  LSM303::vector_cross(&N, &down, &E);
+  LSM303::vector_normalize(&E);
+
+  // compute heading
+  int heading = round(atan2(LSM303::vector_dot(&E, &from), LSM303::vector_dot(&N, &from)) * 180 / M_PI);
+  if (heading < 0) heading += 360;
+  return heading;
+}
+
 // Yields a relative heading in respect to our driving angle/heading
 int relativeHeading(int headingFrom, int headingTo)
 {
@@ -219,5 +241,6 @@ int averageHeading()
   avg.y /= 10.0;
   avg.z = 0;
   compass.m = avg;
-  return compass.heading((LSM303::vector){1,0,0});    
+  //return compass.heading((LSM303::vector){1,0,0});
+  return findHeading((LSM303::vector){1,0,0});    
 }
