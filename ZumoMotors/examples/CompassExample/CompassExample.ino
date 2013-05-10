@@ -193,24 +193,15 @@ void turnLeft(int refactor)
 
 int findHeading(LSM303::vector from)
 {
-  LSM303::vector down = {0,0,1};
-  LSM303::vector N; // N is north
-  // shift and scale
-  N.x = (compass.m.x - compass.m_min.x) / (compass.m_max.x - compass.m_min.x) * 2 - 1.0;
-  N.y = (compass.m.y - compass.m_min.y) / (compass.m_max.y - compass.m_min.y) * 2 - 1.0;
-  N.z = 0;
-
-  LSM303::vector_normalize(&N);
-
-  // compute E and N
-  LSM303::vector E;
-  LSM303::vector_cross(&N, &down, &E);
-  LSM303::vector_normalize(&E);
-
-  // compute heading
-  int heading = round(atan2(LSM303::vector_dot(&E, &from), LSM303::vector_dot(&N, &from)) * 180 / M_PI);
-  if (heading < 0) heading += 360;
-  return heading;
+  int x = (int)compass.m.x;
+  int y = (int)compass.m.y;
+  float xScaled =  2.0*(float)(x - compass.m_min.x) / ( compass.m_max.x - compass.m_min.x) - 1.0;
+  float yScaled =  2.0*(float)(y -  compass.m_min.y) / (compass.m_max.y - compass.m_min.y) - 1.0;
+  
+  int angle = round(atan2(yScaled, xScaled)*180 / M_PI);
+  if (angle < 0)
+    angle += 360;
+  return angle;
 }
 
 // Yields a relative heading in respect to our driving angle/heading
