@@ -191,10 +191,10 @@ void turnLeft(int refactor)
   motors.setLeftSpeed(-SPEED*adjust - 100);
 }
 
-int findHeading(LSM303::vector from)
+int heading(LSM303::vector from, LSM303::vector avg)
 {
-  int x = (int)compass.m.x;
-  int y = (int)compass.m.y;
+  int x = (int)avg.x;
+  int y = (int)avg.y;
   float xScaled =  2.0*(float)(x - compass.m_min.x) / ( compass.m_max.x - compass.m_min.x) - 1.0;
   float yScaled =  2.0*(float)(y -  compass.m_min.y) / (compass.m_max.y - compass.m_min.y) - 1.0;
   
@@ -231,7 +231,6 @@ int averageHeading()
   avg.x /= 10.0;
   avg.y /= 10.0;
   avg.z = 0;
-  compass.m = avg;
   //return compass.heading((LSM303::vector){1,0,0});
-  return findHeading((LSM303::vector){1,0,0});    
+  return heading((LSM303::vector){1,0,0},avg);    
 }
