@@ -1,4 +1,5 @@
 #include <ZumoMotors.h>
+#include <Pushbutton.h>
 #include <Wire.h>
 #include <LSM303.h>
 
@@ -14,63 +15,65 @@
  */
  
 #define SPEED 200
-#define DEVIATION 5
-#define CALISIZE 70
-#define CRA_REG_M          0x00    // magnetometer control register location
-#define CRA_REG_M_220HZ    0x1C    // reg value 220 Hz update rate for magnetometer
 
-/*	Public variables that may be used for compass are:
- *	m_min - minimum magnetic vector
- *	m_max - maximum magnetic vector
- *	m     - magnetic vector
- *	a     - acceleration vector
+#define CALIB_SAMPLES 70
+#define CRA_REG_M_220HZ 0x1C // CRA_REG_M value for magnetometer 220 Hz update rate
+
+// allowed deviation (in degrees) relative to target angle that must be achieved before driving straight
+#define DEVIATE_THRESHOLD 5
+
+#define DEVIATE_RIGHT_THRESHOLD   DEVIATE_THRESHOLD
+#define DEVIATE_LEFT_THRESHOLD    (360 - DEVIATE_THRESHOLD)
+
+/* Public variables that may be used for compass are:
+ * m_min - minimum magnetic vector
+ * m_max - maximum magnetic vector
+ * m     - magnetic vector
+ * a     - acceleration vector
  */
 
 ZumoMotors motors;
+Pushbutton button(ZUMO_BUTTON);
 LSM303 compass;
-int heading,relativeHeading;
-LSM303::vector averageHeading;
-
-// The highest possible magnetic value to read in any direction is 2047
-// The lowest possible magnetic value to read in any direction is -2047
-LSM303::vector running_min = {2047, 2047, 2047}, running_max = {-2048, -2048, -2048};
-int drivingAngle = 0;
-
-// deviateRightAngle, stands for deviated angle on right side of the driving angle. 
-// If we are within DEVIATION degrees relative to the driving angle, then we drive straight.
-int deviateRightAngle = DEVIATION;
-int deviateLeftAngle = 360 - DEVIATION;
 
 // Setup will calibrate our compass
 // We calibrate by finding maximum/minimum magnetic readings
 void setup() 
 {  
-  unsigned long index;
+  // The highest possible magnetic value to read in any direction is 2047
+  // The lowest possible magnetic value to read in any direction is -2047
+  LSM303::vector running_min = {2047, 2047, 2047}, running_max = {-2048, -2048, -2048};
+  unsigned char index;
+  
   Serial.begin(9600);
-  Serial.println("starting calibration");
-  // Initiate the Wire library and join the I2C bus as a master or slave
+  
+  // Initiate the Wire library and join the I2C bus as a master
   Wire.begin(); 
   
   // Initiate LSM303
   compass.init();
   
   // Enables Accelerometer and Magnetometer
-  compass.enableDefault(); 
+  compass.enableDefault();
   
-  compass.setMagGain(compass.magGain_13);    // highest sensitivity: +/- 1.3 gauss range (this is the default)
-  compass.writeMagReg(CRA_REG_M, CRA_REG_M_220HZ);  // 220 Hz compass update rate (default is 15 Hz)
+  compass.setMagGain(compass.magGain_25);                  // +/- 2.5 gauss sensitivity to hopefully avoid overflow problems
+  compass.writeMagReg(LSM303_CRA_REG_M, CRA_REG_M_220HZ);  // 220 Hz compass update rate
+  
+  float min_x_avg[CALIB_SAMPLES];
+  float min_y_avg[CALIB_SAMPLES];
+  float max_x_avg[CALIB_SAMPLES]; 
+  float max_y_avg[CALIB_SAMPLES];
+  
+  button.waitForButton();
+  
+  Serial.println("starting calibration");
   
   // To calibrate the magnetometer we must spin the Zumo to find the Max/Min
   // magnetic vectors. This information is used to find North and East.
   motors.setLeftSpeed(SPEED);
   motors.setRightSpeed(-SPEED);
-  
-  float min_x_avg[CALISIZE];
-  float min_y_avg[CALISIZE];
-  float max_x_avg[CALISIZE]; 
-  float max_y_avg[CALISIZE];
 
-  for(index = 0; index < CALISIZE; index ++)
+  for(index = 0; index < CALIB_SAMPLES; index ++)
   {
     // Read in magnetic vector m
     compass.read();
@@ -81,25 +84,12 @@ void setup()
     running_max.x = max(running_max.x, compass.m.x);
     running_max.y = max(running_max.y, compass.m.y);
     
-    min_x_avg[index] = running_min.x;
-    min_y_avg[index] = running_min.y;
-  
-    max_x_avg[index] = running_max.x;
-    max_y_avg[index] = running_max.y;
-    delay(100);
-    Serial.println(index);
+    delay(50);
   }
   
-  Serial.println("Left loop");
   motors.setLeftSpeed(0);
   motors.setRightSpeed(0);
-  //delay(2000);
-  // Throw out outliers and take a better average
-  running_max.x = bestAverage(max_x_avg,CALISIZE);
-  running_max.y = bestAverage(max_y_avg,CALISIZE);
-  running_min.x = bestAverage(min_x_avg,CALISIZE);
-  running_min.y = bestAverage(min_y_avg,CALISIZE);
-  
+    
   Serial.print("max.x   ");
   Serial.print(running_max.x);
   Serial.println();
@@ -118,81 +108,65 @@ void setup()
   compass.m_max.y = running_max.y; 
   compass.m_min.x = running_min.x;
   compass.m_min.y = running_min.y;
+  
+  button.waitForButton();
 }
 
 void loop() 
 {  
+  int heading, relHeading;
+  static int targetHeading = averageHeading();
+  
   // LSM303::vector{1,0,0} starts our heading to point North
   // Heading is given in degrees away from North, increasing clockwise
-  heading = findBestHeading();
+  heading = averageHeading();
   
   // This gives us our relative heading in respect to the angle we want to drive in
-  relativeHeading = findRelativeHeading(heading);
+  relHeading = relativeHeading(targetHeading, heading);
   
-  Serial.print("Driving Angle: ");
-  Serial.print(drivingAngle);
-  Serial.print("   Adjusted Angle: ");
-  Serial.print(relativeHeading);
-  Serial.print("    Heading     ");
+  Serial.print("Target heading: ");
+  Serial.print(targetHeading);
+  Serial.print("    Actual heading: ");
   Serial.print(heading);
+  Serial.print("    Difference: ");
+  Serial.print(relHeading);
+
+  
+  // We now want to turn 90 degrees relative to the direction we are pointing at.
+  // This will help account for variable magnetic field.
   
   // We want to take a relative heading and turn 90 degrees to make our right turn
-  if((relativeHeading < deviateRightAngle) || (relativeHeading > deviateLeftAngle))
+  if((relHeading < DEVIATE_RIGHT_THRESHOLD) || (relHeading > DEVIATE_LEFT_THRESHOLD))
   {
-    motors.setLeftSpeed(SPEED);
-    motors.setRightSpeed(SPEED);
+    motors.setSpeeds(SPEED, SPEED);
+
     Serial.print("   Straight");
     
-    // We now want to turn 90 degrees relative to the direction we are pointing at.
-    // This will help account for variable magnetic field.
-    drivingAngle = (drivingAngle + 90)%360;
-    delay(1000);
+
+
+      delay(1000);
+      
+      motors.setSpeeds(0, 0);
+      delay(100);
+      
+      // We now want to turn 90 degrees relative to the direction we are pointing at.
+      // This will help account for variable magnetic field.
+      targetHeading = (averageHeading() + 90) % 360;
   } 
   else 
   {
-    if((relativeHeading - deviateRightAngle)<(deviateLeftAngle - relativeHeading))
-	{
-      turnLeft(relativeHeading - deviateRightAngle);
+    if((relHeading - DEVIATE_RIGHT_THRESHOLD) < (DEVIATE_LEFT_THRESHOLD - relHeading))
+    {
+      turnLeft(relHeading - DEVIATE_RIGHT_THRESHOLD);
       Serial.print("     Turn Left");
     }
     else
-	{
-      turnRight(deviateLeftAngle - relativeHeading);
+    {
+      turnRight(DEVIATE_LEFT_THRESHOLD - relHeading);
       Serial.print("     Turn Right");
     }
   }
   Serial.println();
-}
-
-// bestAverage finds an overall average while taking outlier 
-// measurements out of the equation for calibration
-float bestAverage(float * average,int array_size)
-{
-  float temp_value;
-  float sum = 0;
-  int upper_limit = array_size-array_size/3;
-  int lower_limit = array_size/3;
-  // First we sort the data so we can find the middle data.
-  for(int i = array_size; i > -1; i --)
-  {
-    for(int j = 0; j < i; j ++)
-	{
-      if(average[i]<average[j])
-	  {
-        temp_value = average[i];
-        average[i]=average[j];
-        average[j] = temp_value;
-      }
-    }
-  }
-
-  // We then exclude the outliers out of the average 
-  // by only averaging up the the middle third of the data
-  for(int i = lower_limit; i <upper_limit ; i ++)
-  {
-    sum += average[i];
-  }
-  return sum/((float)(upper_limit-lower_limit));
 }
 
 // The closer we get to our driving angle, the slower we will turn.
@@ -218,34 +192,32 @@ void turnLeft(int refactor)
 }
 
 // Yields a relative heading in respect to our driving angle/heading
-int findRelativeHeading(int heading)
+int relativeHeading(int headingFrom, int headingTo)
 {
-  int relativeHeading;
-  
-  if(drivingAngle < heading){
-    relativeHeading = heading - drivingAngle;
+  if(headingFrom < headingTo)
+  {
+    return headingTo - headingFrom;
   }
   else
   {
-    relativeHeading = heading + (360 - drivingAngle);
+    return headingTo + (360 - headingFrom);
   }
-
-  return relativeHeading;
 }
 
 // We average 10 vectors to get a better measurement. The motors cause too much (magnetic) noise.
-int findBestHeading()
+int averageHeading()
 {
-  averageHeading.x = 0;
-  averageHeading.y = 0;
+  LSM303::vector avg = {0, 0, 0};
+
   for(int i = 0; i < 10; i ++)
   {
     compass.read();
-    averageHeading.x += compass.m.x;
-    averageHeading.y += compass.m.y;      
+    avg.x += compass.m.x;
+    avg.y += compass.m.y;       
   }
-  averageHeading.x /= 10.0;
-  averageHeading.y /= 10.0;
-  compass.m = averageHeading;
+  avg.x /= 10.0;
+  avg.y /= 10.0;
+  avg.z = 0;
+  compass.m = avg;
   return compass.heading((LSM303::vector){1,0,0});    
 }
