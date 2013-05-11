@@ -191,10 +191,11 @@ void turnLeft(int refactor)
   motors.setLeftSpeed(-SPEED*adjust - 100);
 }
 
-int heading(LSM303::vector from, LSM303::vector avg)
+// Heading gives you degrees starting clockwise away from the from vector v
+int heading(LSM303::vector v)
 {
-  int x = (int)avg.x;
-  int y = (int)avg.y;
+  int x = (int)v.x;
+  int y = (int)v.y;
   float xScaled =  2.0*(float)(x - compass.m_min.x) / ( compass.m_max.x - compass.m_min.x) - 1.0;
   float yScaled =  2.0*(float)(y -  compass.m_min.y) / (compass.m_max.y - compass.m_min.y) - 1.0;
   
@@ -231,6 +232,6 @@ int averageHeading()
   avg.x /= 10.0;
   avg.y /= 10.0;
   avg.z = 0;
-  //return compass.heading((LSM303::vector){1,0,0});
-  return heading((LSM303::vector){1,0,0},avg);    
+  // avg is the average measure of the north vector.
+  return heading(avg);    
 }
