@@ -4,17 +4,22 @@
 #include <LSM303.h>
 
 /* This example uses ZumoMotors, Wire, and LSM303 (compass) library to 
- * drive the Zumo in squares. To do this, the Zumo first calibrates to
- * find North and East. Calibration is accomplished in setup().
+ * drive the Zumo in squares. To do this, the Zumo first calibrates 
+ * the compass to account for offsets in its output. Calibration is
+ * accomplished in setup().
+ *
  * In loop(), The driving angle then changes its offset by 90 degrees 
  * from the heading every second. Essentially, this navigates the
  * Zumo to drive in square patterns.
  *
- * It is important to note that electronics, buildings, and environment
- * may adversly affect readings from the LSM303 compass. 
+ * It is important to note that stray magnetic fields from electric
+ * current (including from the Zumo's own motors) and the environment
+ * (for example, steel rebar in a concrete floor) might adversely
+ * affect readings from the LSM303 compass and make them less
+ * reliable.
  */
  
-#define SPEED 200
+#define SPEED 200 // maximum motor speed when turning or going straight
 
 #define CALIB_SAMPLES 70
 #define CRA_REG_M_220HZ 0x1C // CRA_REG_M value for magnetometer 220 Hz update rate
@@ -132,26 +137,23 @@ void loop()
   Serial.print(heading);
   Serial.print("    Difference: ");
   Serial.print(relHeading);
-
   
-  // We now want to turn 90 degrees relative to the direction we are pointing at.
-  // This will help account for variable magnetic field.
-  
-  // We want to take a relative heading and turn 90 degrees to make our right turn
+  // If we have turned to the direction we want to be pointing, go straight and then do another turn
   if((relHeading < DEVIATE_RIGHT_THRESHOLD) || (relHeading > DEVIATE_LEFT_THRESHOLD))
   {
     motors.setSpeeds(SPEED, SPEED);
 
     Serial.print("   Straight");
 
-      delay(1000);
-      
-      motors.setSpeeds(0, 0);
-      delay(100);
-      
-      // We now want to turn 90 degrees relative to the direction we are pointing at.
-      // This will help account for variable magnetic field.
-      targetHeading = (averageHeading() + 90) % 360;
+    delay(1000);
+    
+    // turn off motors and wait a short time to reduce interference from motors
+    motors.setSpeeds(0, 0);
+    delay(100);
+    
+    // We now want to turn 90 degrees relative to the direction we are pointing at.
+    // This will help account for variable magnetic field.
+    targetHeading = (averageHeading() + 90) % 360;
   } 
   else 
   {
@@ -171,7 +173,7 @@ void loop()
 
 // The closer we get to our driving angle, the slower we will turn.
 // We do not want to overshoot our direction.
-// turnRight(), takes in the ideal speed and refactors it accordingly to how close
+// turnRight() takes the ideal speed and refactors it accordingly to how close
 // the zumo is pointing towards the direction we want to drive.
 void turnRight(int refactor)
 {
@@ -182,7 +184,7 @@ void turnRight(int refactor)
 
 // The closer we get to our driving angle, the slower we will turn.
 // We do not want to overshoot our direction.
-// turnLeft(), takes in the ideal speed and refactors it accordingly to how close
+// turnLeft() takes the ideal speed and refactors it accordingly to how close
 // the zumo is pointing towards the direction we want to drive.
 void turnLeft(int refactor)
 {
@@ -191,13 +193,11 @@ void turnLeft(int refactor)
   motors.setLeftSpeed(-SPEED*adjust - 100);
 }
 
-// Heading gives you degrees starting clockwise away from the from vector v
+// Converts x and y components of a vector to a heading in degrees
 int heading(LSM303::vector v)
 {
-  int x = (int)v.x;
-  int y = (int)v.y;
-  float xScaled =  2.0*(float)(x - compass.m_min.x) / ( compass.m_max.x - compass.m_min.x) - 1.0;
-  float yScaled =  2.0*(float)(y -  compass.m_min.y) / (compass.m_max.y - compass.m_min.y) - 1.0;
+  float xScaled =  2.0*(float)(v.x - compass.m_min.x) / ( compass.m_max.x - compass.m_min.x) - 1.0;
+  float yScaled =  2.0*(float)(v.y -  compass.m_min.y) / (compass.m_max.y - compass.m_min.y) - 1.0;
   
   int angle = round(atan2(yScaled, xScaled)*180 / M_PI);
   if (angle < 0)
@@ -205,7 +205,7 @@ int heading(LSM303::vector v)
   return angle;
 }
 
-// Yields a relative heading in respect to our driving angle/heading
+// Yields the angle difference in degrees between two headings
 int relativeHeading(int headingFrom, int headingTo)
 {
   if(headingFrom < headingTo)
@@ -231,7 +231,7 @@ int averageHeading()
   }
   avg.x /= 10.0;
   avg.y /= 10.0;
-  avg.z = 0;
+
   // avg is the average measure of the north vector.
   return heading(avg);    
 }
