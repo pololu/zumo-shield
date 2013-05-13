@@ -11,8 +11,8 @@
  *
  *   https://github.com/pololu/LSM303
  *
- * This program first first calibrates the compass to account for
- * offsets in its output. Calibration is accomplished in setup().
+ * This program first calibrates the compass to account for offsets in
+ *  its output. Calibration is accomplished in setup().
  *
  * In loop(), The driving angle then changes its offset by 90 degrees
  * from the heading every second. Essentially, this navigates the
@@ -25,30 +25,22 @@
  * reliable.
  */
 
-#define SPEED 200 // maximum motor speed when turning or going straight
+#define SPEED 200 // Maximum motor speed when turning or going straight
 
-#define CALIB_SAMPLES 70
-#define CRA_REG_M_220HZ 0x1C // CRA_REG_M value for magnetometer 220 Hz update rate
+#define CALIBRATION_SAMPLES 70  // Number of compass readings to take when calibrating
+#define CRA_REG_M_220HZ 0x1C    // CRA_REG_M value for magnetometer 220 Hz update rate
 
-// allowed deviation (in degrees) relative to target angle that must be achieved before driving straight
-#define DEVIATE_THRESHOLD 5
+// Allowed deviation (in degrees) relative to target angle that must be achieved before driving straight
+#define DEVIATION_THRESHOLD 5
 
-#define DEVIATE_RIGHT_THRESHOLD   DEVIATE_THRESHOLD
-#define DEVIATE_LEFT_THRESHOLD    (360 - DEVIATE_THRESHOLD)
-
-/* Public variables that may be used for compass are:
- * m_min - minimum magnetic vector
- * m_max - maximum magnetic vector
- * m     - magnetic vector
- * a     - acceleration vector
- */
+#define DEVIATION_RIGHT_THRESHOLD   DEVIATION_THRESHOLD
+#define DEVIATION_LEFT_THRESHOLD    (360 - DEVIATION_THRESHOLD)
 
 ZumoMotors motors;
 Pushbutton button(ZUMO_BUTTON);
 LSM303 compass;
 
-// Setup will calibrate our compass
-// We calibrate by finding maximum/minimum magnetic readings
+// Setup will calibrate our compass by finding maximum/minimum magnetic readings
 void setup()
 {
   // The highest possible magnetic value to read in any direction is 2047
@@ -64,29 +56,30 @@ void setup()
   // Initiate LSM303
   compass.init();
 
-  // Enables Accelerometer and Magnetometer
+  // Enables accelerometer and magnetometer
   compass.enableDefault();
 
   compass.setMagGain(compass.magGain_25);                  // +/- 2.5 gauss sensitivity to hopefully avoid overflow problems
   compass.writeMagReg(LSM303_CRA_REG_M, CRA_REG_M_220HZ);  // 220 Hz compass update rate
 
-  float min_x_avg[CALIB_SAMPLES];
-  float min_y_avg[CALIB_SAMPLES];
-  float max_x_avg[CALIB_SAMPLES];
-  float max_y_avg[CALIB_SAMPLES];
+  float min_x_avg[CALIBRATION_SAMPLES];
+  float min_y_avg[CALIBRATION_SAMPLES];
+  float max_x_avg[CALIBRATION_SAMPLES];
+  float max_y_avg[CALIBRATION_SAMPLES];
 
   button.waitForButton();
 
   Serial.println("starting calibration");
 
-  // To calibrate the magnetometer we must spin the Zumo to find the Max/Min
-  // magnetic vectors. This information is used to find North and East.
+  // To calibrate the magnetometer, the Zumo spins to find the max/min
+  // magnetic vectors. This information is used to correct for offsets
+  // in the magnetometer data.
   motors.setLeftSpeed(SPEED);
   motors.setRightSpeed(-SPEED);
 
-  for(index = 0; index < CALIB_SAMPLES; index ++)
+  for(index = 0; index < CALIBRATION_SAMPLES; index ++)
   {
-    // Read in magnetic vector m
+    // Take a reading of the magnetic vector and store it in compass.m
     compass.read();
 
     running_min.x = min(running_min.x, compass.m.x);
@@ -127,25 +120,24 @@ void setup()
 
 void loop()
 {
-  int heading, relHeading;
-  static int targetHeading = averageHeading();
+  int heading, relative_heading;
+  static int target_heading = averageHeading();
 
-  // LSM303::vector{1,0,0} starts our heading to point North
   // Heading is given in degrees away from North, increasing clockwise
   heading = averageHeading();
 
-  // This gives us our relative heading in respect to the angle we want to drive in
-  relHeading = relativeHeading(targetHeading, heading);
+  // This gives us the relative heading with respect to the target angle
+  relative_heading = relativeHeading(target_heading, heading);
 
   Serial.print("Target heading: ");
-  Serial.print(targetHeading);
+  Serial.print(target_heading);
   Serial.print("    Actual heading: ");
   Serial.print(heading);
   Serial.print("    Difference: ");
-  Serial.print(relHeading);
+  Serial.print(relative_heading);
 
-  // If we have turned to the direction we want to be pointing, go straight and then do another turn
-  if((relHeading < DEVIATE_RIGHT_THRESHOLD) || (relHeading > DEVIATE_LEFT_THRESHOLD))
+  // If the Zumo has turned to the direction it wants to be pointing, go straight and then do another turn
+  if((relative_heading < DEVIATION_RIGHT_THRESHOLD) || (relative_heading > DEVIATION_LEFT_THRESHOLD))
   {
     motors.setSpeeds(SPEED, SPEED);
 
@@ -153,24 +145,27 @@ void loop()
 
     delay(1000);
 
-    // turn off motors and wait a short time to reduce interference from motors
+    // Turn off motors and wait a short time to reduce interference from motors
     motors.setSpeeds(0, 0);
     delay(100);
 
-    // We now want to turn 90 degrees relative to the direction we are pointing at.
-    // This will help account for variable magnetic field.
-    targetHeading = (averageHeading() + 90) % 360;
+    // Turn 90 degrees relative to the direction we are pointing.
+    // This will help account for variable magnetic field, as opposed
+    // to using fixed increments of 90 degrees from the initial
+    // heading (which might have been measured in a different magnetic
+    // field than the one the Zumo is experiencing now).
+    target_heading = (averageHeading() + 90) % 360;
   }
   else
   {
-    if((relHeading - DEVIATE_RIGHT_THRESHOLD) < (DEVIATE_LEFT_THRESHOLD - relHeading))
+    if((relative_heading - DEVIATION_RIGHT_THRESHOLD) < (DEVIATION_LEFT_THRESHOLD - relative_heading))
     {
-      turnLeft(relHeading - DEVIATE_RIGHT_THRESHOLD);
+      turnLeft(relative_heading - DEVIATION_RIGHT_THRESHOLD);
       Serial.print("     Turn Left");
     }
     else
     {
-      turnRight(DEVIATE_LEFT_THRESHOLD - relHeading);
+      turnRight(DEVIATION_LEFT_THRESHOLD - relative_heading);
       Serial.print("     Turn Right");
     }
   }
@@ -199,32 +194,37 @@ void turnLeft(int refactor)
   motors.setLeftSpeed(-SPEED*adjust - 100);
 }
 
-// Converts x and y components of a vector to a heading in degrees
+// Converts x and y components of a vector to a heading in degrees.
+// This function is used instead of LSM303::heading() because we don't
+// want the acceleration of the Zumo to factor spuriously into the
+// tilt compensation that LSM303::heading() performs. This calculation
+// assumes that the Zumo is always level.
 int heading(LSM303::vector v)
 {
-  float xScaled =  2.0*(float)(v.x - compass.m_min.x) / ( compass.m_max.x - compass.m_min.x) - 1.0;
-  float yScaled =  2.0*(float)(v.y -  compass.m_min.y) / (compass.m_max.y - compass.m_min.y) - 1.0;
+  float x_scaled =  2.0*(float)(v.x - compass.m_min.x) / ( compass.m_max.x - compass.m_min.x) - 1.0;
+  float y_scaled =  2.0*(float)(v.y - compass.m_min.y) / (compass.m_max.y - compass.m_min.y) - 1.0;
 
-  int angle = round(atan2(yScaled, xScaled)*180 / M_PI);
+  int angle = round(atan2(y_scaled, x_scaled)*180 / M_PI);
   if (angle < 0)
     angle += 360;
   return angle;
 }
 
 // Yields the angle difference in degrees between two headings
-int relativeHeading(int headingFrom, int headingTo)
+int relativeHeading(int heading_from, int heading_to)
 {
-  if(headingFrom < headingTo)
+  if(heading_from < heading_to)
   {
-    return headingTo - headingFrom;
+    return heading_to - heading_from;
   }
   else
   {
-    return headingTo + (360 - headingFrom);
+    return heading_to + (360 - heading_from);
   }
 }
 
-// We average 10 vectors to get a better measurement. The motors cause too much (magnetic) noise.
+// Average 10 vectors to get a better measurement and help smooth out
+// the motors' magnetic interference.
 int averageHeading()
 {
   LSM303::vector avg = {0, 0, 0};
@@ -238,6 +238,6 @@ int averageHeading()
   avg.x /= 10.0;
   avg.y /= 10.0;
 
-  // avg is the average measure of the north vector.
+  // avg is the average measure of the magnetic vector.
   return heading(avg);
 }
