@@ -157,29 +157,24 @@ void loop()
   }
   else
   {
-    // To avoid overshooting, the closer the Zumo gets to the target 
+    // To avoid overshooting, the closer the Zumo gets to the target
     // heading, the slower it should turn. Set the motor speeds to a
     // minimum base amount plus an additional variable amount based
     // on the heading difference.
-  
+
     speed = SPEED*relative_heading/180;
-    
+
     if (speed < 0)
       speed -= TURN_BASE_SPEED;
     else
       speed += TURN_BASE_SPEED;
-    
+
     motors.setSpeeds(speed, -speed);
 
     Serial.print("   Turn");
   }
   Serial.println();
 }
-
-// The closer we get to our driving angle, the slower we will turn.
-// We do not want to overshoot our direction.
-// turnLeft() takes the ideal speed and refactors it accordingly to how close
-// the zumo is pointing towards the direction we want to drive.
 
 // Converts x and y components of a vector to a heading in degrees.
 // This function is used instead of LSM303::heading() because we don't
@@ -201,13 +196,13 @@ int heading(LSM303::vector v)
 int relativeHeading(int heading_from, int heading_to)
 {
   int relative_heading = heading_to - heading_from;
-  
+
   // constrain to -180 to 180 degree range
   if (relative_heading > 180)
     relative_heading -= 360;
   if (relative_heading < -180)
     relative_heading += 360;
-    
+
   return relative_heading;
 }
 
