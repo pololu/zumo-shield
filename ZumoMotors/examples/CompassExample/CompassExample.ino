@@ -25,7 +25,9 @@
  * reliable.
  */
 
-#define SPEED 200 // Maximum motor speed when turning or going straight
+#define SPEED           200 // Maximum motor speed when going straight; variable speed when turning
+#define TURN_BASE_SPEED 100 // Base speed when turning (added to variable speed)
+
 
 #define CALIBRATION_SAMPLES 70  // Number of compass readings to take when calibrating
 #define CRA_REG_M_220HZ 0x1C    // CRA_REG_M value for magnetometer 220 Hz update rate
@@ -157,15 +159,15 @@ void loop()
   {
     // To avoid overshooting, the closer the Zumo gets to the target 
     // heading, the slower it should turn. Set the motor speeds to a
-    // minimum of +/-100 plus an additional amount based on the
-    // heading difference.
+    // minimum base amount plus an additional variable amount based
+    // on the heading difference.
   
     speed = SPEED*relative_heading/180;
     
     if (speed < 0)
-      speed -= 100;
+      speed -= TURN_BASE_SPEED;
     else
-      speed += 100;
+      speed += TURN_BASE_SPEED;
     
     motors.setSpeeds(speed, -speed);
 
