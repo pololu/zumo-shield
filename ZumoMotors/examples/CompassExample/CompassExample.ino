@@ -120,15 +120,14 @@ void setup()
 
 void loop()
 {
-  float adjust;
-  int heading, relative_heading, offset;
+  int heading, relative_heading, speed;
   static int target_heading = averageHeading();
 
-  // Heading is given in degrees away from North, increasing clockwise
+  // Heading is given in degrees away from the magnetic vector, increasing clockwise
   heading = averageHeading();
 
   // This gives us the relative heading with respect to the target angle
-  relative_heading = relativeHeading(target_heading, heading);
+  relative_heading = relativeHeading(heading, target_heading);
 
   Serial.print("Target heading: ");
   Serial.print(target_heading);
@@ -138,7 +137,7 @@ void loop()
   Serial.print(relative_heading);
 
   // If the Zumo has turned to the direction it wants to be pointing, go straight and then do another turn
-  if((relative_heading < DEVIATION_RIGHT_THRESHOLD) || (relative_heading > DEVIATION_LEFT_THRESHOLD))
+  if(abs(relative_heading) < DEVIATION_THRESHOLD)
   {
     motors.setSpeeds(SPEED, SPEED);
 
@@ -159,22 +158,21 @@ void loop()
   }
   else
   {
+    // To avoid overshooting, the closer the Zumo gets to the target 
+    // heading, the slower it should turn. Set the motor speeds to a
+    // minimum of +/-100 plus an additional amount based on the
+    // heading difference.
   
-    // The closer we get to our driving angle, the slower we will turn.
-    // We do not want to overshoot our direction.
-    // turnRight() takes the ideal speed and refactors it accordingly to how close
-    // the zumo is pointing towards the direction we want to drive.
-	
-	offset = relative_heading - 180;
-	
-	if(offset == 0)
-	{
-		offset = 1;
-	}
-	
-    speed =  (18000/offset);
-    motors.setSpeeds(speed,-speed);
-	
+    speed = SPEED*relative_heading/180;
+    
+    if (speed < 0)
+      speed -= 100;
+    else
+      speed += 100;
+    
+    motors.setSpeeds(speed, -speed);
+
+    Serial.print("   Turn");
   }
   Serial.println();
 }
@@ -203,14 +201,15 @@ int heading(LSM303::vector v)
 // Yields the angle difference in degrees between two headings
 int relativeHeading(int heading_from, int heading_to)
 {
-  if(heading_from < heading_to)
-  {
-    return heading_to - heading_from;
-  }
-  else
-  {
-    return heading_to + (360 - heading_from);
-  }
+  int relative_heading = heading_to - heading_from;
+  
+  // constrain to -180 to 180 degree range
+  if (relative_heading > 180)
+    relative_heading -= 360;
+  if (relative_heading < -180)
+    relative_heading += 360;
+    
+  return relative_heading;
 }
 
 // Average 10 vectors to get a better measurement and help smooth out
