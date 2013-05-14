@@ -33,9 +33,6 @@
 // Allowed deviation (in degrees) relative to target angle that must be achieved before driving straight
 #define DEVIATION_THRESHOLD 5
 
-#define DEVIATION_RIGHT_THRESHOLD   DEVIATION_THRESHOLD
-#define DEVIATION_LEFT_THRESHOLD    (360 - DEVIATION_THRESHOLD)
-
 ZumoMotors motors;
 Pushbutton button(ZUMO_BUTTON);
 LSM303 compass;
