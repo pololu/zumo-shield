@@ -1,7 +1,7 @@
 h1. Pololu Zumo Shield Libraries
 
-Version: 1.1.2
-Release Date: 2013-04-18
+Version: 1.1.3
+Release Date: 2013-05-14
 "www.pololu.com":http://www.pololu.com/
 
 h2. Summary
@@ -28,7 +28,9 @@ The ZumoMotors library provides functions for PWM-based speed (and direction) co
 
 If you accidentally soldered a motor to the Zumo Shield backwards (opposite the orientation indicated in the assembly instructions), you can simply call @flipLeftMotor(true)@ and/or @flipRightMotor(true)@ to make the motors behave consistently with the directions in your code.
 
-This library comes with an example sketch demonstrating its use.
+This library comes with an example sketch (ZumoMotorExample) demonstrating its use.
+
+An additional example, CompassExample, demonstrates using the magnetometer in the Zumo Shield's LSM303DLHC sensor to help the Zumo make precise turns. This example also requires the "LSM303 library":https://github.com/pololu/LSM303 to be installed.
 
 h3. ZumoBuzzer
 
@@ -52,6 +54,7 @@ This library, which can also be found in the "qtr-sensors-arduino repository":ht
 
 h2. Version History
 
+* 1.1.3 (2013-05-14): Added CompassExample.
 * 1.1.2 (2013-04-18): Pulled in QTRSensors version 2.1.0.
 * 1.1.1 (2013-04-17): Added ZumoReflectanceSensorArray constructors with parameters to call init() with and pulled fix from qtr-sensors-arduino 2.0.2.
 * 1.1.0 (2013-01-07): Added ZumoReflectanceSensorArray and QTRSensors libraries.
