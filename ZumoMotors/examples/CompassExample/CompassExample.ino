@@ -120,7 +120,8 @@ void setup()
 
 void loop()
 {
-  int heading, relative_heading;
+  float adjust;
+  int heading, relative_heading, offset;
   static int target_heading = averageHeading();
 
   // Heading is given in degrees away from North, increasing clockwise
@@ -158,41 +159,30 @@ void loop()
   }
   else
   {
-    if((relative_heading - DEVIATION_RIGHT_THRESHOLD) < (DEVIATION_LEFT_THRESHOLD - relative_heading))
-    {
-      turnLeft(relative_heading - DEVIATION_RIGHT_THRESHOLD);
-      Serial.print("     Turn Left");
-    }
-    else
-    {
-      turnRight(DEVIATION_LEFT_THRESHOLD - relative_heading);
-      Serial.print("     Turn Right");
-    }
+  
+    // The closer we get to our driving angle, the slower we will turn.
+    // We do not want to overshoot our direction.
+    // turnRight() takes the ideal speed and refactors it accordingly to how close
+    // the zumo is pointing towards the direction we want to drive.
+	
+	offset = relative_heading - 180;
+	
+	if(offset == 0)
+	{
+		offset = 1;
+	}
+	
+    speed =  (18000/offset);
+    motors.setSpeeds(speed,-speed);
+	
   }
   Serial.println();
 }
 
 // The closer we get to our driving angle, the slower we will turn.
 // We do not want to overshoot our direction.
-// turnRight() takes the ideal speed and refactors it accordingly to how close
-// the zumo is pointing towards the direction we want to drive.
-void turnRight(int refactor)
-{
-  float adjust = ((float)refactor)/180.0;
-  motors.setRightSpeed(-SPEED*adjust - 100);
-  motors.setLeftSpeed(SPEED*adjust + 100);
-}
-
-// The closer we get to our driving angle, the slower we will turn.
-// We do not want to overshoot our direction.
 // turnLeft() takes the ideal speed and refactors it accordingly to how close
 // the zumo is pointing towards the direction we want to drive.
-void turnLeft(int refactor)
-{
-  float adjust = ((float)refactor)/180.0;
-  motors.setRightSpeed(SPEED*adjust + 100);
-  motors.setLeftSpeed(-SPEED*adjust - 100);
-}
 
 // Converts x and y components of a vector to a heading in degrees.
 // This function is used instead of LSM303::heading() because we don't
