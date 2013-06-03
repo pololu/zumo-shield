@@ -19,9 +19,9 @@ Download the archive from "GitHub":https://github.com/pololu/zumo-shield-arduino
 h3. Hardware
 
 The Zumo Shield for Arduino can be purchased on Pololu's website:
-* "by itself":http://www.pololu.com/catalog/product/2504;
-* as part of a "Zumo robot kit for Arduino":http://www.pololu.com/catalog/product/2505 that also includes a "Zumo chassis":http://www.pololu.com/catalog/product/1418 and a stainless steel "Zumo blade":http://www.pololu.com/catalog/product/1410; or
-* as a fully-assembled "Zumo robot for Arduino":http://www.pololu.com/catalog/product/2506 with "75:1 HP motors":http://www.pololu.com/catalog/product/2361 and a "reflectance sensor array":http://www.pololu.com/catalog/product/1419 installed.
+* *"by itself":http://www.pololu.com/catalog/product/2504*;
+* as part of a *"Zumo robot kit for Arduino":http://www.pololu.com/catalog/product/2505* that also includes a "Zumo chassis":http://www.pololu.com/catalog/product/1418 and a stainless steel "Zumo blade":http://www.pololu.com/catalog/product/1410; or
+* as a fully-assembled *"Zumo robot for Arduino":http://www.pololu.com/catalog/product/2506* with "75:1 HP motors":http://www.pololu.com/catalog/product/2361 and a "reflectance sensor array":http://www.pololu.com/catalog/product/1419 installed.
 
 See the "Zumo Shield user's guide":http://www.pololu.com/docs/0J57 for more details about purchasing and assembling the hardware.
 
@@ -41,7 +41,7 @@ The ZumoBuzzer library provides functions that allow various sounds to be played
 
 h3. Pushbutton
 
-The Pushbutton library provides a set of functions that are useful for detecting and debouncing pushbutton presses. While the most obvious application of this library is to work with the Zumo Shield’s user pushbutton on digital pin 12, this library can be used as a general-purpose library for interfacing many types of buttons and switches to an Arduino, even without a Zumo Shield.  This library comes with an example sketch demonstrating its use.
+The Pushbutton library provides a set of functions that are useful for detecting and debouncing pushbutton presses. While the most obvious application of this library is to work with the Zumo Shieldï¿½s user pushbutton on digital pin 12, this library can be used as a general-purpose library for interfacing many types of buttons and switches to an Arduino, even without a Zumo Shield.  This library comes with an example sketch demonstrating its use.
 
 h3. ZumoReflectanceSensorArray
 
