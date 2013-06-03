@@ -6,7 +6,7 @@ Release Date: 2013-06-03
 
 h2. Summary
 
-This is a collection of libraries for the "Arduino":http://pololu.com/catalog/product/2191 that interfaces with the Pololu "Zumo Shield":http://www.pololu.com/catalog/product/2504, "Zumo Reflectance Sensor Array":http://www.pololu.com/catalog/product/1419, and "Zumo robot kit":http://www.pololu.com/catalog/product/2505. These libraries provide functions to help you program an Arduino-controlled Zumo robot, and the included example projects demonstrate how to use them for more complex tasks.
+This is a collection of libraries for the "Arduino":http://pololu.com/catalog/product/2191 that interfaces with the Pololu "Zumo Shield":http://www.pololu.com/catalog/product/2504, "Zumo Reflectance Sensor Array":http://www.pololu.com/catalog/product/1419, "Zumo robot kit":http://www.pololu.com/catalog/product/2505, and "Zumo robot for Arduino":http://www.pololu.com/catalog/product/2506. These libraries provide functions to help you program an Arduino-controlled Zumo robot, and the included example projects demonstrate how to use them for more complex tasks.
 
 For more information about the libraries and examples, please see the "Zumo Shield user's guide":http://www.pololu.com/docs/0J57.
 
@@ -21,7 +21,7 @@ h3. Hardware
 The Zumo Shield for Arduino can be purchased on Pololu's website:
 * "by itself":http://www.pololu.com/catalog/product/2504;
 * as part of a "Zumo robot kit for Arduino":http://www.pololu.com/catalog/product/2505 that also includes a "Zumo chassis":http://www.pololu.com/catalog/product/1418 and a stainless steel "Zumo blade":http://www.pololu.com/catalog/product/1410; or
-* as a fully-assembled "Zumo robot for Arduino"http://www.pololu.com/catalog/product/2506 with "75:1 HP motors":http://www.pololu.com/catalog/product/2361 and a "reflectance sensor array":http://www.pololu.com/catalog/product/1419 installed.
+* as a fully-assembled "Zumo robot for Arduino":http://www.pololu.com/catalog/product/2506 with "75:1 HP motors":http://www.pololu.com/catalog/product/2361 and a "reflectance sensor array":http://www.pololu.com/catalog/product/1419 installed.
 
 See the "Zumo Shield user's guide":http://www.pololu.com/docs/0J57 for more details about purchasing and assembling the hardware.
 
