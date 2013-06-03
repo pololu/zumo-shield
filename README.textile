@@ -14,7 +14,7 @@ h2. Getting Started
 
 h3. Software
 
-Download the archive from "GitHub":https://github.com/pololu/zumo-shield-arduino, decompress it, and move each library folder (Pushbutton, QTRSensors, ZumoBuzzer, ZumoMotors, and ZumoReflectanceSensorArray) into the "libraries" subdirectory inside your Arduino sketchbook directory. You can view your sketchbook location by selecting File->Preferences in the Arduino environment; if there is not already a "libraries" folder in that location, you should create it yourself. After installing the library, restart the Arduino environment so it can find the Zumo Shield libraries and their examples.
+Download the archive from "GitHub":https://github.com/pololu/zumo-shield-arduino, decompress it, and move each library folder (Pushbutton, QTRSensors, ZumoBuzzer, ZumoExamples, ZumoMotors, and ZumoReflectanceSensorArray) into the "libraries" subdirectory inside your Arduino sketchbook directory. You can view your sketchbook location by selecting File->Preferences in the Arduino environment; if there is not already a "libraries" folder in that location, you should create it yourself. After installing the library, restart the Arduino environment so it can find the Zumo Shield libraries and their examples.
 
 h3. Hardware
 
@@ -28,13 +28,11 @@ The ZumoMotors library provides functions for PWM-based speed (and direction) co
 
 If you accidentally soldered a motor to the Zumo Shield backwards (opposite the orientation indicated in the assembly instructions), you can simply call @flipLeftMotor(true)@ and/or @flipRightMotor(true)@ to make the motors behave consistently with the directions in your code.
 
-This library comes with an example sketch (ZumoMotorExample) demonstrating its use.
-
-An additional example, CompassExample, demonstrates using the magnetometer in the Zumo Shield's LSM303DLHC sensor to help the Zumo make precise turns. This example also requires the "LSM303 library":https://github.com/pololu/LSM303 to be installed.
+This library comes with an example sketch demonstrating its use.
 
 h3. ZumoBuzzer
 
-The ZumoBuzzer library provides functions that allow various sounds to be played on the buzzer of the Zumo Shield, from simple beeps to complex tunes.  This library is fully compatible with the OrangutanBuzzer functions in the "Pololu AVR C/C++ Library":http://www.pololu.com/docs/0J18, so any melodies written for OrangutanBuzzer functions will also work with ZumoBuzzer functions.  This library comes some example sketches demonstrating its use.
+The ZumoBuzzer library provides functions that allow various sounds to be played on the buzzer of the Zumo Shield, from simple beeps to complex tunes.  This library is fully compatible with the OrangutanBuzzer functions in the "Pololu AVR C/C++ Library":http://www.pololu.com/docs/0J18, so any melodies written for OrangutanBuzzer functions will also work with ZumoBuzzer functions.  This library comes with some example sketches demonstrating its use.
 
 h3. Pushbutton
 
@@ -52,8 +50,13 @@ h3. QTRSensors
 
 This library, which can also be found in the "qtr-sensors-arduino repository":https://github.com/pololu/qtr-sensors-arduino, is a general library for interfacing with "Pololu QTR reflectance sensors":http://www.pololu.com/catalog/category/123.  Since the "Zumo Reflectance Sensor Array":http://www.pololu.com/catalog/product/1419 has the same interface as the QTR RC reflectance sensors, the ZumoReflectanceSensorArray library uses QTRSensors to read the sensor array.
 
+h2. Example Projects
+
+Some additional example sketches can be found under Files->Examples->ZumoExamples in the Arduino environment. These examples demonstrate how you can program a Zumo to perform more complex and interesting tasks by combining the functionality of multiple libraries. The Example Projects section of the "Zumo Shield user's guide":http://www.pololu.com/docs/0J57 describes these examples in more detail.
+
 h2. Version History
 
+* 1.2.0 (2013-06-03): Added ZumoExamples dummy library containing example projects.
 * 1.1.3 (2013-05-14): Added CompassExample.
 * 1.1.2 (2013-04-18): Pulled in QTRSensors version 2.1.0.
 * 1.1.1 (2013-04-17): Added ZumoReflectanceSensorArray constructors with parameters to call init() with and pulled fix from qtr-sensors-arduino 2.0.2.
