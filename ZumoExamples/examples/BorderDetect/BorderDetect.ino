@@ -14,7 +14,7 @@
 #define TURN_SPEED        200
 #define FORWARD_SPEED     200
 #define REVERSE_DURATION  200 // ms
-#define TURN_DURATION     400 // ms
+#define TURN_DURATION     300 // ms
  
 ZumoBuzzer buzzer;
 ZumoMotors motors;
@@ -70,18 +70,18 @@ void loop()
   {
     // if leftmost sensor detects line, reverse and turn to the right
     motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
-    delay(200);
+    delay(REVERSE_DURATION);
     motors.setSpeeds(TURN_SPEED, -TURN_SPEED);
-    delay(300);
+    delay(TURN_DURATION);
     motors.setSpeeds(FORWARD_SPEED, FORWARD_SPEED);
   }
   else if (sensor_values[5] < QTR_THRESHOLD)
   {
     // if rightmost sensor detects line, reverse and turn to the left
     motors.setSpeeds(-REVERSE_SPEED, -REVERSE_SPEED);
-    delay(200);
+    delay(REVERSE_DURATION);
     motors.setSpeeds(-TURN_SPEED, TURN_SPEED);
-    delay(300);
+    delay(TURN_DURATION);
     motors.setSpeeds(FORWARD_SPEED, FORWARD_SPEED);
   }
   else
