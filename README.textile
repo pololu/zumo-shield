@@ -1,7 +1,7 @@
 h1. Pololu Zumo Shield Libraries
 
-Version: 1.2.1
-Release Date: 2013-07-19
+Version: 1.2.2
+Release Date: 2013-10-08
 "www.pololu.com":http://www.pololu.com/
 
 h2. Summary
@@ -61,6 +61,7 @@ Some additional example sketches can be found under Files->Examples->ZumoExample
 
 h2. Version History
 
+* 1.2.2 (2013-10-08): Added SumoCollisionDetect example.
 * 1.2.1 (2013-07-19): Added LineFollower example.
 * 1.2.0 (2013-06-03): Added ZumoExamples dummy library containing example projects.
 * 1.1.3 (2013-05-14): Added CompassExample.
