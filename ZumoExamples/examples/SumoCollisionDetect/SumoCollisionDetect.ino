@@ -7,7 +7,7 @@
 #include <Wire.h>
 #include <LSM303.h>
 
-/* This example uses the accelerometer in the Zumo Shield's onbaord LSM303DLHC with the LSM303 Library to 
+/* This example uses the accelerometer in the Zumo Shield's onboard LSM303DLHC with the LSM303 Library to 
  * detect contact with an adversary robot in the sumo ring. The LSM303 Library is not included in the Zumo 
  * Shield libraries; it can be downloaded separately from GitHub at: 
  *
@@ -15,7 +15,7 @@
  *
  * This example extends the BorderDetect example, which makes use of the onboard Zumo Reflectance Sensor Array
  * and its associated library to detect the border of the sumo ring.  It also illustrates the use of the 
- * ZumoMotors, PushButton, and ZumoBuzzer libaries.
+ * ZumoMotors, PushButton, and ZumoBuzzer libraries.
  *
  * In loop(), the program reads the x and y components of acceleration (ignoring z), and detects a
  * contact when the magnitude of the 3-period average of the x-y vector exceeds an empirically determined
@@ -31,7 +31,7 @@
  *
  * This example also contains the following enhancements:
  * 
- *  - uses the Zumo Buzzer libary to play a sound effect ("charge" melody) at start of competition and 
+ *  - uses the Zumo Buzzer library to play a sound effect ("charge" melody) at start of competition and 
  *    whenever contact is made with an opposing robot
  *
  *  - randomizes the turn angle on border detection, so that the Zumo executes a more effective search pattern
@@ -331,7 +331,7 @@ void on_contact_lost()
 // class Accelerometer -- member function definitions
 
 // enable accelerometer only
-// to enables both accelerometer and magnetometer, call enableDefault() instead
+// to enable both accelerometer and magnetometer, call enableDefault() instead
 void Accelerometer::enable(void)
 {
   // Enable Accelerometer
@@ -460,7 +460,7 @@ void RunningAverage<T>::addValue(T f)
   if (_cnt < _size) _cnt++;
 }
 
-// returns the average of the data-set added sofar
+// returns the average of the data-set added so far
 template <typename T>
 T RunningAverage<T>::getAverage() const
 {
