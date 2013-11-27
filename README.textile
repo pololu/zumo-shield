@@ -1,7 +1,7 @@
 h1. Pololu Zumo Shield Libraries
 
-Version: 1.2.2
-Release Date: 2013-10-08
+Version: 1.2.3
+Release Date: 2013-11-27
 "www.pololu.com":http://www.pololu.com/
 
 h2. Summary
@@ -15,6 +15,8 @@ h2. Getting Started
 h3. Software
 
 Download the archive from "GitHub":https://github.com/pololu/zumo-shield-arduino, decompress it, and move each library folder (Pushbutton, QTRSensors, ZumoBuzzer, ZumoExamples, ZumoMotors, and ZumoReflectanceSensorArray) into the "libraries" subdirectory inside your Arduino sketchbook directory. You can view your sketchbook location by selecting File->Preferences in the Arduino environment; if there is not already a "libraries" folder in that location, you should create it yourself. After installing the library, restart the Arduino environment so it can find the Zumo Shield libraries and their examples.
+
+Some of the examples also require our "LSM303 library":https://github.com/pololu/lsm303-arduino to be installed.
 
 h3. Hardware
 
@@ -61,6 +63,7 @@ Some additional example sketches can be found under Files->Examples->ZumoExample
 
 h2. Version History
 
+* 1.2.3 (2013-11-27): Updated examples to work with LSM303 library version 2.0.0.
 * 1.2.2 (2013-10-08): Added SumoCollisionDetect example.
 * 1.2.1 (2013-07-19): Added LineFollower example.
 * 1.2.0 (2013-06-03): Added ZumoExamples dummy library containing example projects.
