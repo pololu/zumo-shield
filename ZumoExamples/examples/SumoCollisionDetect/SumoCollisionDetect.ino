@@ -53,7 +53,7 @@ Pushbutton button(ZUMO_BUTTON); // pushbutton on pin 12
 
 // Accelerometer Settings
 #define RA_SIZE 3  // number of readings to include in running average of accelerometer readings
-#define XY_ACCELERATION_THRESHOLD 150  // for detection of contact (1000 = magnitude of acceleration due to gravity)
+#define XY_ACCELERATION_THRESHOLD 2400  // for detection of contact (~16000 = magnitude of acceleration due to gravity)
 
 // Reflectance Sensor Settings
 #define NUM_SENSORS 6
@@ -337,10 +337,10 @@ void Accelerometer::enable(void)
   // Enable Accelerometer
   // 0x27 = 0b00100111
   // Normal power mode, all axes enabled
-  writeAccReg(LSM303_CTRL_REG1_A, 0x27);
+  writeAccReg(LSM303::CTRL_REG1_A, 0x27);
 
-  if (getDeviceType() == LSM303DLHC_DEVICE)
-  writeAccReg(LSM303_CTRL_REG4_A, 0x08); // DLHC: enable high resolution mode
+  if (getDeviceType() == LSM303::device_DLHC)
+  writeAccReg(LSM303::CTRL_REG4_A, 0x08); // DLHC: enable high resolution mode
 }
 
 void Accelerometer::getLogHeader(void)
@@ -352,13 +352,11 @@ void Accelerometer::getLogHeader(void)
 void Accelerometer::readAcceleration(unsigned long timestamp)
 {
   readAcc();
-  int a_x = static_cast<int>(a.x);
-  int a_y = static_cast<int>(a.y);
-  if (a_x == last.x && a_y == last.y) return;
+  if (a.x == last.x && a.y == last.y) return;
   
   last.timestamp = timestamp;
-  last.x = a_x;
-  last.y = a_y;
+  last.x = a.x;
+  last.y = a.y;
   
   ra_x.addValue(last.x);
   ra_y.addValue(last.y);
@@ -480,6 +478,3 @@ void RunningAverage<T>::fillValue(T value, int number)
     addValue(value);
   }
 }
-
-
-

@@ -30,7 +30,8 @@
 
 
 #define CALIBRATION_SAMPLES 70  // Number of compass readings to take when calibrating
-#define CRA_REG_M_220HZ 0x1C    // CRA_REG_M value for magnetometer 220 Hz update rate
+#define CRB_REG_M_2_5GAUSS 0x60 // CRB_REG_M value for magnetometer +/-2.5 gauss full scale
+#define CRA_REG_M_220HZ    0x1C // CRA_REG_M value for magnetometer 220 Hz update rate
 
 // Allowed deviation (in degrees) relative to target angle that must be achieved before driving straight
 #define DEVIATION_THRESHOLD 5
@@ -44,7 +45,7 @@ void setup()
 {
   // The highest possible magnetic value to read in any direction is 2047
   // The lowest possible magnetic value to read in any direction is -2047
-  LSM303::vector running_min = {2047, 2047, 2047}, running_max = {-2048, -2048, -2048};
+  LSM303::vector<int16_t> running_min = {32767, 32767, 32767}, running_max = {-32767, -32767, -32767};
   unsigned char index;
 
   Serial.begin(9600);
@@ -58,13 +59,8 @@ void setup()
   // Enables accelerometer and magnetometer
   compass.enableDefault();
 
-  compass.setMagGain(compass.magGain_25);                  // +/- 2.5 gauss sensitivity to hopefully avoid overflow problems
-  compass.writeMagReg(LSM303_CRA_REG_M, CRA_REG_M_220HZ);  // 220 Hz compass update rate
-
-  float min_x_avg[CALIBRATION_SAMPLES];
-  float min_y_avg[CALIBRATION_SAMPLES];
-  float max_x_avg[CALIBRATION_SAMPLES];
-  float max_y_avg[CALIBRATION_SAMPLES];
+  compass.writeReg(LSM303::CRB_REG_M, CRB_REG_M_2_5GAUSS); // +/- 2.5 gauss sensitivity to hopefully avoid overflow problems
+  compass.writeReg(LSM303::CRA_REG_M, CRA_REG_M_220HZ);    // 220 Hz compass update rate
 
   button.waitForButton();
 
@@ -119,8 +115,9 @@ void setup()
 
 void loop()
 {
-  int heading, relative_heading, speed;
-  static int target_heading = averageHeading();
+  float heading, relative_heading;
+  int speed;
+  static float target_heading = averageHeading();
 
   // Heading is given in degrees away from the magnetic vector, increasing clockwise
   heading = averageHeading();
@@ -153,7 +150,8 @@ void loop()
     // to using fixed increments of 90 degrees from the initial
     // heading (which might have been measured in a different magnetic
     // field than the one the Zumo is experiencing now).
-    target_heading = (averageHeading() + 90) % 360;
+    // Note: fmod() is floating point modulo
+    target_heading = fmod(averageHeading() + 90, 360);
   }
   else
   {
@@ -181,21 +179,21 @@ void loop()
 // want the acceleration of the Zumo to factor spuriously into the
 // tilt compensation that LSM303::heading() performs. This calculation
 // assumes that the Zumo is always level.
-int heading(LSM303::vector v)
+template <typename T> float heading(LSM303::vector<T> v)
 {
   float x_scaled =  2.0*(float)(v.x - compass.m_min.x) / ( compass.m_max.x - compass.m_min.x) - 1.0;
   float y_scaled =  2.0*(float)(v.y - compass.m_min.y) / (compass.m_max.y - compass.m_min.y) - 1.0;
 
-  int angle = round(atan2(y_scaled, x_scaled)*180 / M_PI);
+  float angle = atan2(y_scaled, x_scaled)*180 / M_PI;
   if (angle < 0)
     angle += 360;
   return angle;
 }
 
 // Yields the angle difference in degrees between two headings
-int relativeHeading(int heading_from, int heading_to)
+float relativeHeading(float heading_from, float heading_to)
 {
-  int relative_heading = heading_to - heading_from;
+  float relative_heading = heading_to - heading_from;
 
   // constrain to -180 to 180 degree range
   if (relative_heading > 180)
@@ -208,9 +206,9 @@ int relativeHeading(int heading_from, int heading_to)
 
 // Average 10 vectors to get a better measurement and help smooth out
 // the motors' magnetic interference.
-int averageHeading()
+float averageHeading()
 {
-  LSM303::vector avg = {0, 0, 0};
+  LSM303::vector<int32_t> avg = {0, 0, 0};
 
   for(int i = 0; i < 10; i ++)
   {
