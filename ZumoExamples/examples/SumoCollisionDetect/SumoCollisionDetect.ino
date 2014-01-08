@@ -69,7 +69,7 @@ ZumoMotors motors;
 #define REVERSE_SPEED     200 // 0 is stopped, 400 is full speed
 #define TURN_SPEED        200
 #define SEARCH_SPEED      200
-#define SUSTAINED_SPEED   400 // switches to SUSTAINED_SPEEND from FULL_SPEED after FULL_SPEED_DURATION_LIMIT ms
+#define SUSTAINED_SPEED   400 // switches to SUSTAINED_SPEED from FULL_SPEED after FULL_SPEED_DURATION_LIMIT ms
 #define FULL_SPEED        400
 #define STOP_DURATION     100 // ms
 #define REVERSE_DURATION  200 // ms
