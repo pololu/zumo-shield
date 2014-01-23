@@ -37,11 +37,14 @@ class Pushbutton
     unsigned char _pin;
     unsigned char _pullUp;
     unsigned char _defaultState;
-    
+    unsigned char gsdpState;
+    unsigned char gsdrState;
+    unsigned long gsdpPrevTimeMillis;
+    unsigned long gsdrPrevTimeMillis;
+    boolean initialized;
+
     inline void init()
     {
-      static boolean initialized = false;
-
       if (!initialized)
       {
         initialized = true;
