@@ -1,3 +1,28 @@
+/*! \file ZumoBuzzer.h
+ *
+ * \class ZumoBuzzer ZumoBuzzer.h
+ *
+ * The ZumoBuzzer library allows various sounds to be played through the buzzer
+ * on the Zumo Shield, from simple beeps to complex tunes. The buzzer is
+ * controlled using a PWM output of Timer 2 (on the Arduino Uno and other
+ * ATmega328/168 boards) or Timer 4 (on the Arduino Leonardo and other
+ * ATmega32U4 boards), so it will conflict with any other uses of that timer.
+ *
+ * Note durations are timed using a timer overflow interrupt
+ * (`TIMER2_OVF`/`TIMER4_OVF`), which will briefly interrupt execution of your
+ * main program at the frequency of the sound being played. In most cases, the
+ * interrupt-handling routine is very short (several microseconds). However,
+ * when playing a sequence of notes in `PLAY_AUTOMATIC` mode (the default mode)
+ * with the `play()` command, this interrupt takes much longer than normal
+ * (perhaps several hundred microseconds) every time it starts a new note. It is
+ * important to take this into account when writing timing-critical code.
+ *
+ * The ZumoBuzzer library is fully compatible with the OrangutanBuzzer functions
+ * in the [Pololu AVR C/C++ Library](http://www.pololu.com/docs/0J18), so any
+ * sequences and melodies written for OrangutanBuzzer functions will also work
+ * with the equivalent ZumoBuzzer functions.
+ */
+
 #ifndef ZumoBuzzer_h
 #define ZumoBuzzer_h
 
@@ -12,8 +37,11 @@
 //         o                                        o
 //  and a is given by the twelfth root of 2 (~1.059463094359)
 
-// key
-
+/*! \anchor note_macros
+ *
+ * \name Note Macros
+ * _x_ specifies the octave of the note
+ */
 #define NOTE_C(x)       ( 0 + (x)*12)
 #define NOTE_C_SHARP(x) ( 1 + (x)*12)
 #define NOTE_D_FLAT(x)  ( 1 + (x)*12)
@@ -32,9 +60,14 @@
 #define NOTE_B_FLAT(x)  (10 + (x)*12)
 #define NOTE_B(x)       (11 + (x)*12)
 
-#define SILENT_NOTE   0xFF  // this note will silence the buzzer
+/*! \brief silences buzzer for the note duration */
+#define SILENT_NOTE   0xFF
 
-#define DIV_BY_10     (1 << 15) // frequency bit that indicates Hz/10
+/*! \brief frequency bit that indicates Hz/10<br>
+ * e.g. _frequency_ = `(445 | DIV_BY_10)` gives a frequency of 44.5 Hz
+ */
+#define DIV_BY_10     (1 << 15)
+/*! @} */
 
 class ZumoBuzzer
 {
@@ -43,137 +76,219 @@ class ZumoBuzzer
     // constructor
   ZumoBuzzer();
 
-  // Sets up timer 1 to play the desired frequency (in Hz or .1 Hz) for the
-  // the desired duration (in ms). Allowed frequencies are 40 Hz to 10 kHz.
-  // 'volume' controls buzzer volume, with 15 being loudest and 0 being 
-  // quietest.  If the most significant bit of 'freq' is set, the frequency
-  // is taken to be the value of the lower 15 bits in units of .1 Hz.
-  // Otherwise the units are in Hz.
-  // Note: frequency*duration/1000 must be less than 0xFFFF (65535).  This
-  // means that you can't use a max duration of 65535 ms for frequencies
-  // greater than 1 kHz.  For example, the max duration you can use for a
-  // frequency of 10 kHz is 6553 ms.  If you use a duration longer than this,
-  // you will cause an integer overflow that produces unexpected behavior.
-  static void playFrequency(unsigned int freq, unsigned int duration, 
+  /*! This method will play the specified frequency (in Hz or 0.1 Hz) for the
+   * specified duration (in ms). The _frequency_ argument must be between 40 Hz
+   * and 10 kHz. If the most significant bit of _frequency_ is set, the
+   * frequency played is the value of the lower 15 bits of _frequency_ in units
+   * of 0.1 Hz. Therefore, you can play a frequency of 44.5 Hz by using a
+   * _frequency_ of `(DIV_BY_10 | 445)`. If the most significant bit of
+   * _frequency_ is not set, the units for frequency are Hz. The _volume_
+   * argument controls the buzzer volume, with 15 being the loudest and 0 being
+   * the quietest. A _volume_ of 15 supplies the buzzer with a 50% duty cycle
+   * PWM at the specified _frequency_. Lowering _volume_ by one halves the duty
+   * cycle (so 14 gives a 25% duty cycle, 13 gives a 12.5% duty cycle, etc). The
+   * volume control is somewhat crude (especially on the ATmega328/168) and
+   * should be thought of as a bonus feature.
+   *
+   * This function plays the note in the background while your program continues
+   * to execute. If you call another buzzer function while the note is playing,
+   * the new function call will overwrite the previous and take control of the
+   * buzzer. If you want to string notes together, you should either use the
+   * `play()` function or put an appropriate delay after you start a note
+   * playing. You can use the `is_playing()` function to figure out when the
+   * buzzer is through playing its note or melody.
+   *
+   * ### Example ###
+   *
+   * ~~~{.ino}
+   * // play a 6 kHz note for 250 ms at a lower volume
+   * ZumoBuzzer::playFrequency(6000, 250, 12);
+   *
+   * // wait for buzzer to finish playing the note
+   * while (ZumoBuzzer::isPlaying());
+   *
+   * // play a 44.5 Hz note for 1 s at full volume
+   * ZumoBuzzer::playFrequency(DIV_BY_10 | 445, 1000, 15);
+   * ~~~
+   *
+   * \warning _frequency_ &times; _duration_/1000 must be no greater than
+     0xFFFF (65535). This means you can't use a max duration of 65535 ms for
+     frequencies greater than 1 kHz. For example, the maximum duration you can
+     use for a frequency of 10 kHz is 6553 ms. If you use a duration longer than
+     this, you will produce an integer overflow that can result in unexpected
+     behavior.
+   */
+  static void playFrequency(unsigned int freq, unsigned int duration,
                 unsigned char volume);
-  
-  // Sets up timer 1 to play the desired note for the desired duration
-  // (in ms).  'volume' controls the buzzer volume, with 15 being loudest and
-  // 0 being quietest.
-  // note = key + octave * 12, where 0 <= key < 12
-  // example: A4 = A + 4 * 12, where A = 9 (so A4 = 57)
-  // A note is converted to a frequency by the formula:
-  //   Freq(n) = Freq(0) * a^n
-  // where
-  //   Freq(0) is chosen as A4, which is 440 Hz
-  // and
-  //   a = 2 ^ (1/12)
-  // n is the number of notes you are away from A4.
-  // if note = 16, freq = 41.2 Hz (E1 - lower limit as freq must be >40 Hz)
-  // if note = 57, freq = 440 Hz (A4 - central value of ET Scale)
-  // if note = 111, freq = 9.96 kHz (D#9 - upper limit, freq must be <10 kHz)
-  // if note = 255, freq = 1 kHz and buzzer is silent (silent note)
+
+  /*! This method will play the specified note for the specified duration (in
+   * ms). The _note_ argument is an enumeration for the notes of the equal
+   * tempered scale (ETS). See \ref note_macros "Note Macros" for more
+   * information. The _volume_ argument controls the buzzer volume, with 15
+   * being the loudest and 0 being the quietest. A _volume_ of 15 supplies the
+   * buzzer with a 50% duty cycle PWM at the specified _frequency_. Lowering
+   * _volume_ by one halves the duty cycle (so 14 gives a 25% duty cycle, 13
+   * gives a 12.5% duty cycle, etc). The volume control is somewhat crude
+   * (especially on the ATmega328/168) and should be thought of as a bonus
+   * feature.
+   *
+   * This function plays the note in the background while your program continues
+   * to execute. If you call another buzzer function while the note is playing,
+   * the new function call will overwrite the previous and take control of the
+   * buzzer. If you want to string notes together, you should either use the
+   * `play()` function or put an appropriate delay after you start a note
+   * playing. You can use the `is_playing()` function to figure out when the
+   * buzzer is through playing its note or melody.
+   */
   static void playNote(unsigned char note, unsigned int duration,
           unsigned char volume);
 
-  // Plays the specified sequence of notes.  If the play mode is 
-  // PLAY_AUTOMATIC, the sequence of notes will play with no further
-  // action required by the user.  If the play mode is PLAY_CHECK,
-  // the user will need to call playCheck() in the main loop to initiate
-  // the playing of each new note in the sequence.  The play mode can
-  // be changed while the sequence is playing.  
-  // This is modeled after the PLAY commands in GW-BASIC, with just a
-  // few differences.
-  //
-  // The notes are specified by the characters C, D, E, F, G, A, and
-  // B, and they are played by default as "quarter notes" with a
-  // length of 500 ms.  This corresponds to a tempo of 120
-  // beats/min.  Other durations can be specified by putting a number
-  // immediately after the note.  For example, C8 specifies C played as an
-  // eighth note, with half the duration of a quarter note. The special
-  // note R plays a rest (no sound).
-  //
-  // Various control characters alter the sound:
-  //   '>' plays the next note one octave higher
-  //
-  //   '<' plays the next note one octave lower
-  //
-  //   '+' or '#' after a note raises any note one half-step
-  //
-  //   '-' after a note lowers any note one half-step
-  //
-  //   '.' after a note "dots" it, increasing the length by
-  //       50%.  Each additional dot adds half as much as the
-  //       previous dot, so that "A.." is 1.75 times the length of
-  //       "A".
-  //
-  //   'O' followed by a number sets the octave (default: O4).
-  //
-  //   'T' followed by a number sets the tempo (default: T120).
-  //
-  //   'L' followed by a number sets the default note duration to
-  //       the type specified by the number: 4 for quarter notes, 8
-  //       for eighth notes, 16 for sixteenth notes, etc.
-  //       (default: L4)
-  //
-  //   'V' followed by a number from 0-15 sets the music volume.
-  //       (default: V15)
-  //
-  //   'MS' sets all subsequent notes to play staccato - each note is played
-  //       for 1/2 of its allotted time, followed by an equal period
-  //       of silence.
-  //
-  //   'ML' sets all subsequent notes to play legato - each note is played
-  //       for its full length.  This is the default setting.
-  //
-  //   '!' resets all persistent settings to their defaults.
-  //
-  // The following plays a c major scale up and back down:
-  //   play("L16 V8 cdefgab>cbagfedc");
-  //
-  // Here is an example from Bach:
-  //   play("T240 L8 a gafaeada c+adaeafa <aa<bac#ada c#adaeaf4");
+  /*! This method plays the specified sequence of notes.  If the play mode is
+   * `PLAY_AUTOMATIC` (default), the sequence of notes will play with no further
+   * action required by the user. If the play mode is `PLAY_CHECK`, the user
+   * will need to call `playCheck()` in the main loop to initiate the playing of
+   * each new note in the sequence. The play mode can be changed while the
+   * sequence is playing. The sequence syntax is modeled after the PLAY commands
+   * in GW-BASIC, with just a few differences.
+   *
+   * The notes are specified by the characters **C**, **D**, **E**, **F**,
+   * **G**, **A**, and **B**, and they are played by default as "quarter notes"
+   * with a length of 500 ms. This corresponds to a tempo of 120 beats/min.
+   * Other durations can be specified by putting a number immediately after the
+   * note. For example, C8 specifies C played as an eighth note, with half the
+   * duration of a quarter note. The special note **R** plays a rest (no sound).
+   * The sequence parser is case-insensitive and ignores spaces, which may be
+   * used to format your music nicely.
+   *
+   * Various control characters alter the sound:
+   * <table>
+   * <tr><th>Control character(s)</th><th>Effect</th></tr>
+   * <tr><td><strong>A--G</strong></td>
+   *     <td>Specifies a note that will be played.</td></tr>
+   * <tr><td><strong>R</strong></td>
+   *     <td>Specifies a rest (no sound for the duration of the note).</td></tr>
+   * <tr><td><strong>+</strong></strong> or <strong>#</strong> after a note</td>
+   *     <td>Raises the preceding note one half-step.</td></tr>
+   * <tr><td><strong>-</strong> after a note</td>
+   *     <td>Lowers the preceding note one half-step.</td></tr>
+   * <tr><td><strong>1--2000</strong> after a note</td>
+   *     <td>Determines the duration of the preceding note. For example, C16
+   *         specifies C played as a sixteenth note (1/16th the length of a
+   *         whole note).</td></tr>
+   * <tr><td><strong>.</strong> after a note</td>
+   *     <td>"Dots" the preceding note, increasing the length by 50%. Each
+   *         additional dot adds half as much as the previous dot, so that "A.."
+   *         is 1.75 times the length of "A".</td></tr>
+   * <tr><td><strong>></strong> before a note</td>
+   *     <td>Plays the following note one octave higher.</td></tr>
+   * <tr><td><strong><</strong> before a note</td>
+   *     <td>Plays the following note one octave lower.</td></tr>
+   * <tr><td><strong>O</strong> followed by a number</td>
+   *     <td>Sets the octave. (default: **O4**)</td></tr>
+   * <tr><td><strong>T</strong> followed by a number</td>
+   *     <td>Sets the tempo in beats per minute (BPM). (default: **T120**)</td></tr>
+   * <tr><td><strong>L</strong> followed by a number</td>
+   *     <td>Sets the default note duration to the type specified by the number:
+   *         4 for quarter notes, 8 for eighth notes, 16 for sixteenth notes,
+   *         etc. (default: **L4**)</td></tr>
+   * <tr><td><strong>V</strong> followed by a number</td>
+   *     <td>Sets the music volume (0--15). (default: **V15**)</td></tr>
+   * <tr><td><strong>MS</strong></td>
+   *     <td>Sets all subsequent notes to play play staccato -- each note is
+   *     played for 1/2 of its allotted time, followed by an equal period of
+   *     silence.</td></tr>
+   * <tr><td><strong>ML</strong></td>
+   *     <td>Sets all subsequent notes to play legato -- each note is played for
+   *     full length. This is the default setting.</td></tr>
+   * <tr><td><strong>!</strong></td>
+   *     <td>Resets the octave, tempo, duration, volume, and staccato setting to
+   *     their default values. These settings persist from one `play()` to the
+   *     next, which allows you to more conveniently break up your music into
+   *     reusable sections.</td></tr>
+   * </table>
+   *
+   * This function plays the string of notes in the background while your
+   * program continues to execute. If you call another buzzer function while the
+   * melody is playing, the new function call will overwrite the previous and
+   * take control of the buzzer. If you want to string melodies together, you
+   * should put an appropriate delay after you start a melody playing. You can
+   * use the `is_playing()` function to figure out when the buzzer is through
+   * playing the melody.
+   *
+   * ### Example ###
+   *
+   * ~~~{.ino}
+   * // play a C major scale up and back down:
+   * ZumoBuzzer::play("!L16 V8 cdefgab>cbagfedc");
+   * while (ZumoBuzzer::isPlaying());
+   * // the first few measures of Bach's fugue in D-minor
+   * ZumoBuzzer::play("!T240 L8 agafaea dac+adaea fa<aa<bac#a dac#adaea f4");
+   * ~~~
+   */
   static void play(const char *sequence);
 
-  // A version of play that takes a pointer to program space instead
-  // of RAM.  This is desirable since RAM is limited and the string
-  // must be in program space anyway.
+  /*! A version of `play()` that takes a pointer to program space instead of
+   * RAM. This is desirable since RAM is limited and the string must be in
+   * program space anyway.
+   *
+   * ### Example ###
+   *
+   * ~~~{.ino}
+   * #include <avr/pgmspace.h>
+   * const char melody[] PROGMEM = "!L16 V8 cdefgab>cbagfedc";
+   *
+   * void someFunction()
+   * {
+   *   ZumoBuzzer::playFromProgramSpace(melody);
+   * }
+   * ~~~
+   */
   static void playFromProgramSpace(const char *sequence_p);
 
-  // This puts play() into a mode where instead of advancing to the
-  // next note in the sequence automatically, it waits until the
-  // function playCheck() is called. The idea is that you can
-  // put playCheck() in your main loop and avoid potential
-  // delays due to the note sequence being checked in the middle of
-  // a time sensitive calculation.  It is recommended that you use
-  // this function if you are doing anything that can't tolerate
-  // being interrupted for more than a few microseconds.
-  // Note that the play mode can be changed while a sequence is being
-  // played.
-  //
-  // Usage: playMode(PLAY_AUTOMATIC) makes it automatic (the
-  // default), playMode(PLAY_CHECK) sets it to a mode where you have
-  // to call playCheck().
+  /*! This method lets you determine whether the notes of the `play()` sequence
+   * are played automatically in the background or are driven by the
+   * `play_check()` method. If _mode_ is `PLAY_AUTOMATIC`, the sequence will
+   * play automatically in the background, driven by the timer overflow
+   * interrupt. The interrupt will take a considerable amount of time to execute
+   * when it starts the next note in the sequence playing, so it is recommended
+   * that you do not use automatic-play if you cannot tolerate being interrupted
+   * for more than a few microseconds. If _mode_ is `PLAY_CHECK`, you can
+   * control when the next note in the sequence is played by calling the
+   * `play_check()` method at acceptable points in your main loop. If your main
+   * loop has substantial delays, it is recommended that you use automatic-play
+   * mode rather than play-check mode. Note that the play mode can be changed
+   * while the sequence is being played. The mode is set to `PLAY_AUTOMATIC` by
+   * default.
+   */
   static void playMode(unsigned char mode);
 
-  // Checks whether it is time to start another note, and starts
-  // it if so.  If it is not yet time to start the next note, this method
-  // returns without doing anything.  Call this as often as possible 
-  // in your main loop to avoid delays between notes in the sequence.
-  //
-  // Returns true if it is still playing.
+  /*! This method only needs to be called if you are in `PLAY_CHECK` mode. It
+   * checks to see whether it is time to start another note in the sequence
+   * initiated by `play()`, and starts it if so. If it is not yet time to start
+   * the next note, this method returns without doing anything. Call this as
+   * often as possible in your main loop to avoid delays between notes in the
+   * sequence. This method returns 0 (false) if the melody to be played is
+   * complete, otherwise it returns 1 (true).
+   */
   static unsigned char playCheck();
 
-  // Returns 1 if the buzzer is currently playing, otherwise it returns 0
+  /*! This method returns 1 (true) if the buzzer is currently playing a
+   * note/frequency or if it is still playing a sequence started by `play()`.
+   * Otherwise, it returns 0 (false). You can poll this method to determine when
+   * it's time to play the next note in a sequence, or you can use it as the
+   * argument to a delay loop to wait while the buzzer is busy.
+   */
   static unsigned char isPlaying();
-  
-  // Stops all sound playback immediately.
+
+  /*! This method will immediately silence the buzzer and terminate any
+   * note/frequency/melody that is currently playing.
+   */
   static void stopPlaying();
-  
-  
+
+
   private:
-  
-  // initializes timer1 for buzzer control
+
+  // initializes timer for buzzer control
   static void init2();
   static void init();
 };
