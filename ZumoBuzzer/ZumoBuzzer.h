@@ -101,14 +101,18 @@ class ZumoBuzzer
    * ### Example ###
    *
    * ~~~{.ino}
+   * ZumoBuzzer buzzer;
+   * 
+   * ...
+   *
    * // play a 6 kHz note for 250 ms at a lower volume
-   * ZumoBuzzer::playFrequency(6000, 250, 12);
+   * buzzer.playFrequency(6000, 250, 12);
    *
    * // wait for buzzer to finish playing the note
-   * while (ZumoBuzzer::isPlaying());
+   * while (buzzer.isPlaying());
    *
    * // play a 44.5 Hz note for 1 s at full volume
-   * ZumoBuzzer::playFrequency(DIV_BY_10 | 445, 1000, 15);
+   * buzzer.playFrequency(DIV_BY_10 | 445, 1000, 15);
    * ~~~
    *
    * \warning _frequency_ &times; _duration_/1000 must be no greater than
@@ -218,11 +222,16 @@ class ZumoBuzzer
    * ### Example ###
    *
    * ~~~{.ino}
+   * ZumoBuzzer buzzer;
+   *
+   * ...
+   *
    * // play a C major scale up and back down:
-   * ZumoBuzzer::play("!L16 V8 cdefgab>cbagfedc");
-   * while (ZumoBuzzer::isPlaying());
+   * buzzer.play("!L16 V8 cdefgab>cbagfedc");
+   * while (buzzer.isPlaying());
+   *
    * // the first few measures of Bach's fugue in D-minor
-   * ZumoBuzzer::play("!T240 L8 agafaea dac+adaea fa<aa<bac#a dac#adaea f4");
+   * buzzer.play("!T240 L8 agafaea dac+adaea fa<aa<bac#a dac#adaea f4");
    * ~~~
    */
   static void play(const char *sequence);
@@ -235,12 +244,13 @@ class ZumoBuzzer
    *
    * ~~~{.ino}
    * #include <avr/pgmspace.h>
-   * const char melody[] PROGMEM = "!L16 V8 cdefgab>cbagfedc";
    *
-   * void someFunction()
-   * {
-   *   ZumoBuzzer::playFromProgramSpace(melody);
-   * }
+   * ZumoBuzzer buzzer;
+   * const char melody[] PROGMEM = "!L16 V8 cdefgab>cbagfedc";
+   * 
+   * ...
+   *
+   * buzzer.playFromProgramSpace(melody);
    * ~~~
    */
   static void playFromProgramSpace(const char *sequence_p);
