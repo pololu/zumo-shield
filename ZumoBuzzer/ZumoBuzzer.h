@@ -1,5 +1,7 @@
 /*! \file ZumoBuzzer.h
  *
+ * See the ZumoBuzzer class reference for more information about this library.
+ *
  * \class ZumoBuzzer ZumoBuzzer.h
  *
  * The ZumoBuzzer library allows various sounds to be played through the buzzer
@@ -41,6 +43,7 @@
  *
  * \name Note Macros
  * _x_ specifies the octave of the note
+ * @{
  */
 #define NOTE_C(x)       ( 0 + (x)*12)
 #define NOTE_C_SHARP(x) ( 1 + (x)*12)
