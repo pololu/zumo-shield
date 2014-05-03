@@ -1,3 +1,6 @@
+#ifndef ZumoReflectanceSensorArray_h
+#define ZumoReflectanceSensorArray_h
+
 #include <../QTRSensors/QTRSensors.h>
 #include <Arduino.h>
 
@@ -44,3 +47,5 @@ class ZumoReflectanceSensorArray : public QTRSensorsRC
     QTRSensorsRC::init(pins, numSensors, timeout, emitterPin);
   }
 };
+
+#endif
