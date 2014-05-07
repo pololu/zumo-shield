@@ -1,3 +1,13 @@
+/*! \file ZumoReflectanceSensorArray.h
+ *
+ * See the ZumoReflectanceSensorArray class reference for more information about
+ * this library.
+ *
+ * \class ZumoReflectanceSensorArray ZumoReflectanceSensorArray.h
+ *
+ * 
+ */
+
 #ifndef ZumoReflectanceSensorArray_h
 #define ZumoReflectanceSensorArray_h
 
