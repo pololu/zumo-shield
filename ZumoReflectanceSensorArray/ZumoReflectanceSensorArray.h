@@ -4,10 +4,9 @@
  * this library.
  *
  * \class ZumoReflectanceSensorArray ZumoReflectanceSensorArray.h
- *
- * 
+ * \brief Read from reflectance sensor array
  */
-
+ 
 #ifndef ZumoReflectanceSensorArray_h
 #define ZumoReflectanceSensorArray_h
 
@@ -57,5 +56,41 @@ class ZumoReflectanceSensorArray : public QTRSensorsRC
     QTRSensorsRC::init(pins, numSensors, timeout, emitterPin);
   }
 };
+
+// documentation for inherited functions
+/*!
+\fn void QTRSensors::read(unsigned int *sensor_values, unsigned char readMode = QTR_EMITTERS_ON)
+description
+
+\fn void QTRSensors::emittersOff()
+description
+ 
+\fn void QTRSensors::emittersOn()
+description
+ 
+\fn void QTRSensors::calibrate(unsigned char readMode = QTR_EMITTERS_ON)
+description
+ 
+\fn void QTRSensors::resetCalibration()
+description
+ 
+\fn void QTRSensors::readCalibrated(unsigned int *sensor_values, unsigned char readMode = QTR_EMITTERS_ON)
+description
+ 
+\fn int QTRSensors::readLine(unsigned int *sensor_values, unsigned char readMode = QTR_EMITTERS_ON, unsigned char white_line = 0)
+description
+
+\property unsigned int * QTRSensors::calibratedMinimumOn
+description
+
+\property unsigned int * QTRSensors::calibratedMaximumOn
+description
+
+\property unsigned int * QTRSensors::calibratedMinimumOff
+description
+
+\property unsigned int * QTRSensors::calibratedMaximumOff
+description
+*/
 
 #endif

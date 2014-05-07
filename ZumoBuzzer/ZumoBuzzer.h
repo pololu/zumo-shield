@@ -3,6 +3,7 @@
  * See the ZumoBuzzer class reference for more information about this library.
  *
  * \class ZumoBuzzer ZumoBuzzer.h
+ * \brief Play beeps and music with buzzer
  *
  * The ZumoBuzzer library allows various sounds to be played through the buzzer
  * on the Zumo Shield, from simple beeps to complex tunes. The buzzer is

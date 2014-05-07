@@ -10,6 +10,7 @@
  * 
  *
  * \class QTRSensors QTRSensors.h
+ * \brief <em>(%ZumoReflectanceSensorArray dependency)</em>
  *
  * This class is part of the \ref QTRSensors.h "QTRSensors" library, which is
  * included in the Zumo Shield libraries as a dependency for the
@@ -22,9 +23,9 @@
  *
  *
  * \class QTRSensorsRC QTRSensors.h
- * \copydetails QTRSensors
+ * \copydoc QTRSensors
  * 
  *
  * \class QTRSensorsAnalog QTRSensors.h
- * \copydetails QTRSensors
+ * \copydoc QTRSensors
  */

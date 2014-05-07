@@ -1,3 +1,12 @@
+/*! \file ZumoMotors.h
+ *
+ * See the ZumoMotors class reference for more information about this library.
+ *
+ * \class ZumoMotors ZumoMotors.h
+ * \brief Control motor speed and direction
+ * 
+ */
+
 #ifndef ZumoMotors_h
 #define ZumoMotors_h
 

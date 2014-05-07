@@ -1,3 +1,12 @@
+/*! \file Pushbutton.h
+ *
+ * See the Pushbutton class reference for more information about this library.
+ *
+ * \class Pushbutton Pushbutton.h
+ * \brief Read button presses and releases with debouncing
+ * 
+ */
+
 #ifndef Pushbutton_h
 #define Pushbutton_h
 
