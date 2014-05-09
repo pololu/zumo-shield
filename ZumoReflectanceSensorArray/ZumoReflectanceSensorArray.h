@@ -21,6 +21,44 @@
  * `micros()` for timing and `digitalRead()` for getting the sensor values, so
  * it should work on all Arduinos without conflicting with other libraries.
  *
+ * ### Calibration ###
+ *
+ * This library allows you to use the `calibrate()` method to easily calibrate
+ * your sensors for the particular conditions it will encounter. Calibrating
+ * your sensors can lead to substantially more reliable sensor readings, which
+ * in turn can help simplify your code. As such, we recommend you build a
+ * calibration phase into your Zumo's initialization routine. This can be as
+ * simple as a fixed duration over which you repeatedly call the `calibrate()`
+ * method.
+ *
+ * During this calibration phase, you will need to expose each of your
+ * reflectance sensors to the lightest and darkest readings they will encounter.
+ * For example, if your Zumo is programmed to be a line follower, you will want
+ * to slide it across the line during the calibration phase so the each sensor
+ * can get a reading of how dark the line is and how light the ground is (or you
+ * can program it to automatically turn back and forth to pass all of the
+ * sensors over the line). The **SensorCalibration** example included with this
+ * library demonstrates a calibration routine.
+ *
+ * ### Reading the sensors
+ *
+ *
+ * This library gives you a number of different ways to read the sensors.
+ *
+ * - You can request raw sensor values using the `read()` method.
+ *
+ * - You can request calibrated sensor values using the `readCalibrated()`
+ *   method. Calibrated sensor values will always range from 0 to 1000, with the
+ *   extreme values corresponding to the most and least reflective surfaces
+ *   encountered during calibration.
+ *
+ * - For line-detection applications, you can request the line location using
+ *   the `readLine()` method. This function provides calibrated values
+ *   for each sensor and returns an integer that tells you where it thinks the
+ *   line is.
+ *
+ * ### Class Inheritance ###
+ *
  * The ZumoReflectanceSensorArray class is derived from the QTRSensorsRC class,
  * which is in turn derived from the QTRSensors base class. The QTRSensorsRC and
  * QTRSensors classes are part of the \ref QTRSensors.h "QTRSensors" library,
@@ -148,10 +186,10 @@ class ZumoReflectanceSensorArray : public QTRSensorsRC
    * emitters will only be turned on during a reading. If _emitterPin_ is not
    * specified, the emitters will be controlled with pin 2 on the Uno (and other
    * ATmega328/168 boards) or pin A4 on the Leonardo (and other ATmega32U4
-   * boards). (The "LED ON" jumper on the Zumo Reflectance Sensor Array must be
-   * configured correctly for this to work.) If the value `QTR_NO_EMITTER_PIN`
-   * (255) is used, you can leave the emitter pin disconnected and the IR
-   * emitters will always be on.
+   * boards). (The corresponding connection should be made with the "LED ON"
+   * jumper on the Zumo Reflectance Sensor Array.) If the value
+   * `QTR_NO_EMITTER_PIN` (255) is used, you can leave the emitter pin
+   * disconnected and the IR emitters will always be on.
    *
    * This version of `%init()` can be useful if you only want to use a subset
    * of the six reflectance sensors on the array. For example, using the
@@ -184,30 +222,157 @@ class ZumoReflectanceSensorArray : public QTRSensorsRC
 };
 
 // documentation for inherited functions
-/*!
- * \fn void QTRSensors::read(unsigned int *sensor_values, unsigned char readMode = QTR_EMITTERS_ON)
+
+/*! \fn void QTRSensors::read(unsigned int *sensor_values, unsigned char readMode = QTR_EMITTERS_ON)
  * \brief Reads the raw sensor values into an array.
- * 
- * \fn void QTRSensors::emittersOff()
- * \brief Turns the IR LEDs off.
- * 
- * \fn void QTRSensors::emittersOn()
- * \brief Turns the IR LEDs on.
- * 
- * \fn void QTRSensors::calibrate(unsigned char readMode = QTR_EMITTERS_ON)
- * \brief Reads the sensors for calibration.
- * 
- * \fn void QTRSensors::resetCalibration()
- * \brief Resets all calibration that has been done.
- * 
- * \fn void QTRSensors::readCalibrated(unsigned int *sensor_values, unsigned char readMode = QTR_EMITTERS_ON)
- * \brief Returns sensor readings normalized to values between 0 and 1000.
- * 
- * \fn int QTRSensors::readLine(unsigned int *sensor_values, unsigned char readMode = QTR_EMITTERS_ON, unsigned char white_line = 0)
- * \brief Returns an estimated position of a line under the sensor array.
+ *
+ * \param sensorValues Array to populate with sensor readings.
+ * \param readMode     Read mode (`QTR_EMITTERS_OFF`, `QTR_EMITTERS_ON`, or
+ *                     `QTR_EMITTERS_ON_AND_OFF`).
+ *
+ * There **must** be space in the _sensorValues_ array for as many values as
+ * there were sensors specified in the constructor. The values returned are
+ * measures of the reflectance in units of microseconds. They will be raw
+ * readings between 0 and the _timeout_ argument (in units of microseconds)
+ * provided in the constructor (which defaults to 2000).
+ *
+ * The _readMode_ argument specifies the kind of read that will be performed.
+ * Several options are defined:
+ *
+ * - `QTR_EMITTERS_OFF` specifies that the reading should be made without
+ *   turning on the infrared (IR) emitters, in which case the reading represents
+ *   ambient light levels near the sensor.
+ * - `QTR_EMITTERS_ON` specifies that the emitters should be turned on for the
+ *   reading, which results in a measure of reflectance.
+ * - `QTR_EMITTERS_ON_AND_OFF` specifies that a reading should be made in both
+ *   the on and off states. The values returned when this option is used are
+ *   given by the formula **on + max &minus; off**, where **on** is the reading
+ *   with the emitters on, **off** is the reading with the emitters off, and
+ *   **max** is the maximum sensor reading. This option can reduce the amount of
+ *   interference from uneven ambient lighting.
+ *
+ * Note that emitter control will only work if you specify a valid emitter pin
+ * in the constructor and make the corresponding connection (with the "LED ON"
+ * jumper or otherwise).
+ *
+ * The ZumoReflectanceSensorArray class inherits this function from the
+ * QTRSensors class.
  */
+
+/*! \fn void QTRSensors::emittersOff()
+ * \brief Turns the IR LEDs off.
+ *
+ * This is mainly for use by the `read()` method, and calling this function
+ * before or after reading the sensors will have no effect on the readings, but
+ * you might wish to use it for testing purposes. This method will only do
+ * something if the emitter pin specified in the constructor is valid (i.e. not
+ * `QTR_NO_EMITTER_PIN`) and the corresponding connection is made.
+ *
+ * The ZumoReflectanceSensorArray class inherits this function from the
+ * QTRSensors class.
+ */
+
+/*! \fn void QTRSensors::emittersOn()
+ * \brief Turns the IR LEDs on.
+ * \copydetails emittersOff
+ */
+
+/*! \fn void QTRSensors::calibrate(unsigned char readMode = QTR_EMITTERS_ON)
+ * \brief Reads the sensors for calibration.
+ *
+ * \param readMode     Read mode (`QTR_EMITTERS_OFF`, `QTR_EMITTERS_ON`, or
+ *                     `QTR_EMITTERS_ON_AND_OFF`).
+ *
+ * The sensor values read by this function are not returned; instead, the
+ * maximum and minimum values found over time are stored internally and used for
+ * the `readCalibrated()` method. You can access the calibration (i.e raw max
+ * and min sensor readings) through the public member pointers
+ * `calibratedMinimumOn`, `calibratedMaximumOn`, `calibratedMinimumOff`, and
+ * `calibratedMaximumOff`. Note that these pointers will point to arrays of
+ * length _numSensors_, as specified in the constructor, and they will only be
+ * allocated **after** `calibrate()` has been called. If you only calibrate with
+ * the emitters on, the calibration arrays that hold the off values will not be
+ * allocated.
+ *
+ * The ZumoReflectanceSensorArray class inherits this function from the
+ * QTRSensors class.
+ */
+
+/*! \fn void QTRSensors::resetCalibration()
+ * \brief Resets all calibration that has been done.
+ *
+ * This function discards the calibration values that have been previously
+ * recorded, resetting the min and max values.
+ *
+ * The ZumoReflectanceSensorArray class inherits this function from the
+ * QTRSensors class.
+ */
+
+/*! \fn void QTRSensors::readCalibrated(unsigned int *sensor_values, unsigned char readMode = QTR_EMITTERS_ON)
+ * \brief Returns sensor readings normalized to values between 0 and 1000.
+ *
+ * \param sensorValues Array to populate with sensor readings.
+ * \param readMode     Read mode (`QTR_EMITTERS_OFF`, `QTR_EMITTERS_ON`, or
+ *                     `QTR_EMITTERS_ON_AND_OFF`).
+ *
+ * 0 corresponds to a reading that is less than or equal to the minimum value
+ * read by `calibrate()` and 1000 corresponds to a reading that is greater than
+ * or equal to the maximum value. Calibration values are stored separately for
+ * each sensor, so that differences in the sensors are accounted for
+ * automatically.
+ *
+ * The ZumoReflectanceSensorArray class inherits this function from the
+ * QTRSensors class.
+ */
+
+/*! \fn int QTRSensors::readLine(unsigned int *sensor_values, unsigned char readMode = QTR_EMITTERS_ON, unsigned char whiteLine = 0)
+ * \brief Returns an estimated position of a line under the sensor array.
+ *
+ * \param sensorValues Array to populate with sensor readings.
+ * \param readMode     Read mode (`QTR_EMITTERS_OFF`, `QTR_EMITTERS_ON`, or
+ *                     `QTR_EMITTERS_ON_AND_OFF`).
+ * \param whiteLine   0 to detect a dark line on a light surface; 1 to detect
+ *                     a light line on a dark surface.
+ * \return An estimated line position.
+ *
+ * This function operates the same as `readCalibrated()`, but with a feature
+ * designed for line following: it returns an estimated position of the line.
+ * The estimate is made using a weighted average of the sensor indices
+ * multiplied by 1000, so that a return value of 0 indicates that the line is
+ * directly below sensor 0 (or was last seen by sensor 0 before being lost), a
+ * return value of 1000 indicates that the line is directly below sensor 1, 2000
+ * indicates that it's below sensor 2, etc. Intermediate values indicate that
+ * the line is between two sensors. The formula is:
+ *
+ * \f[
+ *   \newcommand{sv}[1]{\mathtt{sensorValues[#1]}}
+ *   \text{return value} =
+ *     \frac{(0 \times \sv{0}) + (1000 \times \sv{1}) + (2000 \times \sv{2}) + \ldots}
+ *          {\sv{0} + \sv{1} + \sv{2} + \ldots}
+ * \f]
+ *
+ * As long as your sensors aren't spaced too far apart relative to the line,
+ * this returned value is designed to be monotonic, which makes it great for use
+ * in closed-loop PID control. Additionally, this method remembers where it last
+ * saw the line, so if you ever lose the line to the left or the right, its line
+ * position will continue to indicate the direction you need to go to reacquire
+ * the line. For example, if sensor 5 is your rightmost sensor and you end up
+ * completely off the line to the left, this function will continue to return
+ * 5000.
+ *
+ * By default, this function assumes a dark line (high values) on a light
+ * background (low values). If your line is light on dark, set the optional
+ * second argument _whiteLine_ to true. In this case, each sensor value will be
+ * replaced by the maximum possible value minus its actual value before the
+ * averaging.
+ *
+ * The ZumoReflectanceSensorArray class inherits this function from the
+ * QTRSensors class.
+ */
+
  
-// documentation for inherited members
+// documentation for inherited member variables
+
 /*!
  * \property unsigned int * QTRSensors::calibratedMinimumOn
  * \brief The calibrated minimum values measured for each sensor, with emitters
@@ -219,12 +384,15 @@ class ZumoReflectanceSensorArray : public QTRSensorsRC
  * required. This variable is made public so that you can use the calibration
  * values for your own calculations and do things like saving them to EEPROM,
  * performing sanity checking, etc.
- * 
+ *
+ * The ZumoReflectanceSensorArray class inherits this variable from the
+ * QTRSensors class.
+ *
  * \property unsigned int * QTRSensors::calibratedMaximumOn
  * \brief The calibrated maximum values measured for each sensor, with emitters
  *        on.
  * \copydetails QTRSensors::calibratedMinimumOn
- * 
+ *
  * \property unsigned int * QTRSensors::calibratedMinimumOff
  * \brief The calibrated minimum values measured for each sensor, with emitters
  *        off.
