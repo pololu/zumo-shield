@@ -80,19 +80,25 @@ class ZumoBuzzer
     // constructor
   ZumoBuzzer();
 
-  /*! This method will play the specified frequency (in Hz or 0.1 Hz) for the
-   * specified duration (in ms). The _frequency_ argument must be between 40 Hz
-   * and 10 kHz. If the most significant bit of _frequency_ is set, the
-   * frequency played is the value of the lower 15 bits of _frequency_ in units
-   * of 0.1 Hz. Therefore, you can play a frequency of 44.5 Hz by using a
-   * _frequency_ of `(DIV_BY_10 | 445)`. If the most significant bit of
-   * _frequency_ is not set, the units for frequency are Hz. The _volume_
-   * argument controls the buzzer volume, with 15 being the loudest and 0 being
-   * the quietest. A _volume_ of 15 supplies the buzzer with a 50% duty cycle
-   * PWM at the specified _frequency_. Lowering _volume_ by one halves the duty
-   * cycle (so 14 gives a 25% duty cycle, 13 gives a 12.5% duty cycle, etc). The
-   * volume control is somewhat crude (especially on the ATmega328/168) and
-   * should be thought of as a bonus feature.
+  /*! \brief Plays the specified frequency for the specified duration.
+   *
+   * \param freq     Frequency to play in Hz (or 0.1 Hz if the `DIV_BY_10` bit
+   *                 is set).
+   * \param duration Duration of the note in milliseconds.
+   * \param volume   Volume of the note (0--15).
+   *
+   * The _frequency_ argument must be between 40 Hz and 10 kHz. If the most
+   * significant bit of _frequency_ is set, the frequency played is the value of
+   * the lower 15 bits of _frequency_ in units of 0.1 Hz. Therefore, you can
+   * play a frequency of 44.5 Hz by using a _frequency_ of `(DIV_BY_10 | 445)`.
+   * If the most significant bit of _frequency_ is not set, the units for
+   * frequency are Hz. The _volume_ argument controls the buzzer volume, with 15
+   * being the loudest and 0 being the quietest. A _volume_ of 15 supplies the
+   * buzzer with a 50% duty cycle PWM at the specified _frequency_. Lowering
+   * _volume_ by one halves the duty cycle (so 14 gives a 25% duty cycle, 13
+   * gives a 12.5% duty cycle, etc). The volume control is somewhat crude
+   * (especially on the ATmega328/168) and should be thought of as a bonus
+   * feature.
    *
    * This function plays the note in the background while your program continues
    * to execute. If you call another buzzer function while the note is playing,
@@ -106,7 +112,7 @@ class ZumoBuzzer
    *
    * ~~~{.ino}
    * ZumoBuzzer buzzer;
-   * 
+   *
    * ...
    *
    * // play a 6 kHz note for 250 ms at a lower volume
@@ -129,16 +135,20 @@ class ZumoBuzzer
   static void playFrequency(unsigned int freq, unsigned int duration,
                 unsigned char volume);
 
-  /*! This method will play the specified note for the specified duration (in
-   * ms). The _note_ argument is an enumeration for the notes of the equal
-   * tempered scale (ETS). See \ref note_macros "Note Macros" for more
-   * information. The _volume_ argument controls the buzzer volume, with 15
-   * being the loudest and 0 being the quietest. A _volume_ of 15 supplies the
-   * buzzer with a 50% duty cycle PWM at the specified _frequency_. Lowering
-   * _volume_ by one halves the duty cycle (so 14 gives a 25% duty cycle, 13
-   * gives a 12.5% duty cycle, etc). The volume control is somewhat crude
-   * (especially on the ATmega328/168) and should be thought of as a bonus
-   * feature.
+  /*! \brief Plays the specified note for the specified duration.
+   *
+   *  \param note     Note to play (see \ref note_macros "Note Macros").
+   *  \param duration Duration of the note in milliseconds.
+   *  \param volume   Volume of the note (0--15).
+   *
+   * The _note_ argument is an enumeration for the notes of the equal tempered
+   * scale (ETS). See \ref note_macros "Note Macros" for more information. The
+   * _volume_ argument controls the buzzer volume, with 15 being the loudest and
+   * 0 being the quietest. A _volume_ of 15 supplies the buzzer with a 50% duty
+   * cycle PWM at the specified _frequency_. Lowering _volume_ by one halves the
+   * duty cycle (so 14 gives a 25% duty cycle, 13 gives a 12.5% duty cycle,
+   * etc). The volume control is somewhat crude (especially on the
+   * ATmega328/168) and should be thought of as a bonus feature.
    *
    * This function plays the note in the background while your program continues
    * to execute. If you call another buzzer function while the note is playing,
@@ -151,13 +161,16 @@ class ZumoBuzzer
   static void playNote(unsigned char note, unsigned int duration,
           unsigned char volume);
 
-  /*! This method plays the specified sequence of notes.  If the play mode is
-   * `PLAY_AUTOMATIC` (default), the sequence of notes will play with no further
-   * action required by the user. If the play mode is `PLAY_CHECK`, the user
-   * will need to call `playCheck()` in the main loop to initiate the playing of
-   * each new note in the sequence. The play mode can be changed while the
-   * sequence is playing. The sequence syntax is modeled after the PLAY commands
-   * in GW-BASIC, with just a few differences.
+  /*! \brief Plays the specified sequence of notes.
+   *
+   *  \param sequence Char array containing a sequence of notes to play.
+   *
+   * If the play mode is `PLAY_AUTOMATIC` (default), the sequence of notes will
+   * play with no further action required by the user. If the play mode is
+   * `PLAY_CHECK`, the user will need to call `playCheck()` in the main loop to
+   * initiate the playing of each new note in the sequence. The play mode can be
+   * changed while the sequence is playing. The sequence syntax is modeled after
+   * the PLAY commands in GW-BASIC, with just a few differences.
    *
    * The notes are specified by the characters **C**, **D**, **E**, **F**,
    * **G**, **A**, and **B**, and they are played by default as "quarter notes"
@@ -240,9 +253,14 @@ class ZumoBuzzer
    */
   static void play(const char *sequence);
 
-  /*! A version of `play()` that takes a pointer to program space instead of
-   * RAM. This is desirable since RAM is limited and the string must be in
-   * program space anyway.
+  /*! \brief Plays the specified sequence of notes from program space.
+   *
+   * \param sequence Char array in program space containing a sequence of notes
+   *                 to play.
+   *
+   * A version of `play()` that takes a pointer to program space instead of RAM.
+   * This is desirable since RAM is limited and the string must be in program
+   * space anyway.
    *
    * ### Example ###
    *
@@ -251,7 +269,7 @@ class ZumoBuzzer
    *
    * ZumoBuzzer buzzer;
    * const char melody[] PROGMEM = "!L16 V8 cdefgab>cbagfedc";
-   * 
+   *
    * ...
    *
    * buzzer.playFromProgramSpace(melody);
@@ -259,7 +277,12 @@ class ZumoBuzzer
    */
   static void playFromProgramSpace(const char *sequence_p);
 
-  /*! This method lets you determine whether the notes of the `play()` sequence
+  /*! \brief Controls whether `play()` sequence is played automatically or
+   *         must be driven with `playCheck()`.
+   *
+   * \param mode Play mode (either `PLAY_AUTOMATIC` or `PLAY_CHECK`).
+   *
+   * This method lets you determine whether the notes of the `play()` sequence
    * are played automatically in the background or are driven by the
    * `play_check()` method. If _mode_ is `PLAY_AUTOMATIC`, the sequence will
    * play automatically in the background, driven by the timer overflow
@@ -276,7 +299,12 @@ class ZumoBuzzer
    */
   static void playMode(unsigned char mode);
 
-  /*! This method only needs to be called if you are in `PLAY_CHECK` mode. It
+  /*! \brief Starts the next note in a sequence, if necessary, in `PLAY_CHECK`
+   *         mode.
+   *
+   *  \return 0 if sequence is complete, 1 otherwise.
+   *
+   * This method only needs to be called if you are in `PLAY_CHECK` mode. It
    * checks to see whether it is time to start another note in the sequence
    * initiated by `play()`, and starts it if so. If it is not yet time to start
    * the next note, this method returns without doing anything. Call this as
@@ -286,7 +314,12 @@ class ZumoBuzzer
    */
   static unsigned char playCheck();
 
-  /*! This method returns 1 (true) if the buzzer is currently playing a
+  /*! \brief Checks whether a note, frequency, or sequence is being played.
+   *
+   * \return 1 if the buzzer is current playing a note, frequency, or sequence;
+   *         0 otherwise.
+   *
+   * This method returns 1 (true) if the buzzer is currently playing a
    * note/frequency or if it is still playing a sequence started by `play()`.
    * Otherwise, it returns 0 (false). You can poll this method to determine when
    * it's time to play the next note in a sequence, or you can use it as the
@@ -294,7 +327,9 @@ class ZumoBuzzer
    */
   static unsigned char isPlaying();
 
-  /*! This method will immediately silence the buzzer and terminate any
+  /*! \brief Stops any note, frequency, or melody being played.
+   *
+   * This method will immediately silence the buzzer and terminate any
    * note/frequency/melody that is currently playing.
    */
   static void stopPlaying();
