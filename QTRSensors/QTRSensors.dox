@@ -2,8 +2,8 @@
  * 
  * This library is included in the Zumo Shield libraries as a dependency for the
  * ZumoReflectanceSensorArray library. If you are programming an Arduino on a
- * Zumo Shield, you should generally use the ZumoReflectanceSensorArray library
- * instead of using the %QTRSensors library directly.
+ * Zumo, you should generally use the ZumoReflectanceSensorArray library instead
+ * of using the %QTRSensors library directly.
  *
  * For documentation specific to the %QTRSensors library, please see the [user's
  * guide](http://www.pololu.com/docs/0J19) on Pololu's website.
@@ -15,8 +15,8 @@
  * This class is part of the \ref QTRSensors.h "QTRSensors" library, which is
  * included in the Zumo Shield libraries as a dependency for the
  * ZumoReflectanceSensorArray library. If you are programming an Arduino on a
- * Zumo Shield, you should generally use the ZumoReflectanceSensorArray library
- * instead of using the %QTRSensors library directly.
+ * Zumo, you should generally use the ZumoReflectanceSensorArray library instead
+ * of using the %QTRSensors library directly.
  *
  * For documentation specific to the %QTRSensors library, please see the [user's
  * guide](http://www.pololu.com/docs/0J19) on Pololu's website.
