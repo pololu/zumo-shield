@@ -43,7 +43,7 @@
 /*! \anchor note_macros
  *
  * \name Note Macros
- * _x_ specifies the octave of the note
+ * \a x specifies the octave of the note
  * @{
  */
 #define NOTE_C(x)       ( 0 + (x)*12)
@@ -68,7 +68,7 @@
 #define SILENT_NOTE   0xFF
 
 /*! \brief frequency bit that indicates Hz/10<br>
- * e.g. _frequency_ = `(445 | DIV_BY_10)` gives a frequency of 44.5 Hz
+ * e.g. \a frequency = `(445 | DIV_BY_10)` gives a frequency of 44.5 Hz
  */
 #define DIV_BY_10     (1 << 15)
 /*! @} */
@@ -87,17 +87,17 @@ class ZumoBuzzer
    * \param duration Duration of the note in milliseconds.
    * \param volume   Volume of the note (0--15).
    *
-   * The _frequency_ argument must be between 40 Hz and 10 kHz. If the most
-   * significant bit of _frequency_ is set, the frequency played is the value of
-   * the lower 15 bits of _frequency_ in units of 0.1 Hz. Therefore, you can
-   * play a frequency of 44.5 Hz by using a _frequency_ of `(DIV_BY_10 | 445)`.
-   * If the most significant bit of _frequency_ is not set, the units for
-   * frequency are Hz. The _volume_ argument controls the buzzer volume, with 15
-   * being the loudest and 0 being the quietest. A _volume_ of 15 supplies the
-   * buzzer with a 50% duty cycle PWM at the specified _frequency_. Lowering
-   * _volume_ by one halves the duty cycle (so 14 gives a 25% duty cycle, 13
-   * gives a 12.5% duty cycle, etc). The volume control is somewhat crude
-   * (especially on the ATmega328/168) and should be thought of as a bonus
+   * The \a frequency argument must be between 40 Hz and 10 kHz. If the most
+   * significant bit of \a frequency is set, the frequency played is the value
+   * of the lower 15 bits of \a frequency in units of 0.1 Hz. Therefore, you can
+   * play a frequency of 44.5 Hz by using a \a frequency of `(DIV_BY_10 | 445)`.
+   * If the most significant bit of \a frequency is not set, the units for
+   * frequency are Hz. The \a volume argument controls the buzzer volume, with
+   * 15 being the loudest and 0 being the quietest. A \a volume of 15 supplies 
+   * the buzzer with a 50% duty cycle PWM at the specified \a frequency.
+   * Lowering \a volume by one halves the duty cycle (so 14 gives a 25% duty
+   * cycle, 13 gives a 12.5% duty cycle, etc). The volume control is somewhat 
+   * crude (especially on the ATmega328/168) and should be thought of as a bonus
    * feature.
    *
    * This function plays the note in the background while your program continues
@@ -125,7 +125,7 @@ class ZumoBuzzer
    * buzzer.playFrequency(DIV_BY_10 | 445, 1000, 15);
    * ~~~
    *
-   * \warning _frequency_ &times; _duration_/1000 must be no greater than
+   * \warning \a frequency &times; \a duration / 1000 must be no greater than
      0xFFFF (65535). This means you can't use a max duration of 65535 ms for
      frequencies greater than 1 kHz. For example, the maximum duration you can
      use for a frequency of 10 kHz is 6553 ms. If you use a duration longer than
@@ -141,13 +141,13 @@ class ZumoBuzzer
    *  \param duration Duration of the note in milliseconds.
    *  \param volume   Volume of the note (0--15).
    *
-   * The _note_ argument is an enumeration for the notes of the equal tempered
+   * The \a note argument is an enumeration for the notes of the equal tempered
    * scale (ETS). See \ref note_macros "Note Macros" for more information. The
-   * _volume_ argument controls the buzzer volume, with 15 being the loudest and
-   * 0 being the quietest. A _volume_ of 15 supplies the buzzer with a 50% duty
-   * cycle PWM at the specified _frequency_. Lowering _volume_ by one halves the
-   * duty cycle (so 14 gives a 25% duty cycle, 13 gives a 12.5% duty cycle,
-   * etc). The volume control is somewhat crude (especially on the
+   * \a volume argument controls the buzzer volume, with 15 being the loudest 
+   * and 0 being the quietest. A \a volume of 15 supplies the buzzer with a 50% 
+   * duty cycle PWM at the specified \a frequency. Lowering \a volume by one 
+   * halves the duty cycle (so 14 gives a 25% duty cycle, 13 gives a 12.5% duty 
+   * cycle, etc). The volume control is somewhat crude (especially on the
    * ATmega328/168) and should be thought of as a bonus feature.
    *
    * This function plays the note in the background while your program continues
@@ -284,12 +284,12 @@ class ZumoBuzzer
    *
    * This method lets you determine whether the notes of the `play()` sequence
    * are played automatically in the background or are driven by the
-   * `play_check()` method. If _mode_ is `PLAY_AUTOMATIC`, the sequence will
+   * `play_check()` method. If \a mode is `PLAY_AUTOMATIC`, the sequence will
    * play automatically in the background, driven by the timer overflow
    * interrupt. The interrupt will take a considerable amount of time to execute
    * when it starts the next note in the sequence playing, so it is recommended
    * that you do not use automatic-play if you cannot tolerate being interrupted
-   * for more than a few microseconds. If _mode_ is `PLAY_CHECK`, you can
+   * for more than a few microseconds. If \a mode is `PLAY_CHECK`, you can
    * control when the next note in the sequence is played by calling the
    * `play_check()` method at acceptable points in your main loop. If your main
    * loop has substantial delays, it is recommended that you use automatic-play

@@ -137,9 +137,9 @@ class ZumoReflectanceSensorArray : public QTRSensorsRC
    * six sensors on the array are active, and a timeout of 2000 microseconds is
    * used.
    *
-   * _emitterPin_ is the Arduino digital pin that controls whether the IR LEDs
+   * \a emitterPin is the Arduino digital pin that controls whether the IR LEDs
    * are on or off. This pin is optional; if a valid pin is specified, the
-   * emitters will only be turned on during a reading. If _emitterPin_ is not
+   * emitters will only be turned on during a reading. If \a emitterPin is not
    * specified, the emitters will be controlled with pin 2 on the Uno (and other
    * ATmega328/168 boards) or pin A4 on the Leonardo (and other ATmega32U4
    * boards). (The "LED ON" jumper on the Zumo Reflectance Sensor Array must be
@@ -163,27 +163,27 @@ class ZumoReflectanceSensorArray : public QTRSensorsRC
    * This function initializes the ZumoReflectanceSensorArray object with all
    * settings as given.
    *
-   * The array _pins_  should contain the Arduino digital pin numbers for each
+   * The array \a pins should contain the Arduino digital pin numbers for each
    * sensor.
    *
-   * _numSensors_ specifies the length of the _pins_ array (the number of
+   * \a numSensors specifies the length of the \a pins array (the number of
    * reflectance sensors you are using).
    *
-   * _timeout_ specifies the length of time in microseconds beyond which you
+   * \a timeout specifies the length of time in microseconds beyond which you
    * consider the sensor reading completely black. That is to say, if the pulse
-   * length for a pin exceeds _timeout_, pulse timing will stop and the reading
+   * length for a pin exceeds \a timeout, pulse timing will stop and the reading
    * for that pin will be considered full black. It is recommended that you set
-   * _timeout_ to be between 1000 and 3000 us, depending on factors like the
+   * \a timeout to be between 1000 and 3000 us, depending on factors like the
    * height of your sensors and ambient lighting. This allows you to shorten the
    * duration of a sensor-reading cycle while maintaining useful measurements of
-   * reflectance. If _timeout_ is not specified, it defaults to 2000 us. (See
+   * reflectance. If \a timeout is not specified, it defaults to 2000 us. (See
    * the [product page](http://www.pololu.com/product/1419) for the Zumo
    * Reflectance Sensor Array on Pololu's website for an overview of the
    * sensors' principle of operation.)
    *
-   * _emitterPin_ is the Arduino digital pin that controls whether the IR LEDs
+   * \a emitterPin is the Arduino digital pin that controls whether the IR LEDs
    * are on or off. This pin is optional; if a valid pin is specified, the
-   * emitters will only be turned on during a reading. If _emitterPin_ is not
+   * emitters will only be turned on during a reading. If \a emitterPin is not
    * specified, the emitters will be controlled with pin 2 on the Uno (and other
    * ATmega328/168 boards) or pin A4 on the Leonardo (and other ATmega32U4
    * boards). (The corresponding connection should be made with the "LED ON"
@@ -224,19 +224,20 @@ class ZumoReflectanceSensorArray : public QTRSensorsRC
 // documentation for inherited functions
 
 /*! \fn void QTRSensors::read(unsigned int *sensor_values, unsigned char readMode = QTR_EMITTERS_ON)
+\memberof ZumoReflectanceSensorArray
  * \brief Reads the raw sensor values into an array.
  *
  * \param sensorValues Array to populate with sensor readings.
  * \param readMode     Read mode (`QTR_EMITTERS_OFF`, `QTR_EMITTERS_ON`, or
  *                     `QTR_EMITTERS_ON_AND_OFF`).
  *
- * There **must** be space in the _sensorValues_ array for as many values as
+ * There **must** be space in the \a sensorValues array for as many values as
  * there were sensors specified in the constructor. The values returned are
  * measures of the reflectance in units of microseconds. They will be raw
- * readings between 0 and the _timeout_ argument (in units of microseconds)
+ * readings between 0 and the \a timeout argument (in units of microseconds)
  * provided in the constructor (which defaults to 2000).
  *
- * The _readMode_ argument specifies the kind of read that will be performed.
+ * The \a readMode argument specifies the kind of read that will be performed.
  * Several options are defined:
  *
  * - `QTR_EMITTERS_OFF` specifies that the reading should be made without
@@ -289,7 +290,7 @@ class ZumoReflectanceSensorArray : public QTRSensorsRC
  * and min sensor readings) through the public member pointers
  * `calibratedMinimumOn`, `calibratedMaximumOn`, `calibratedMinimumOff`, and
  * `calibratedMaximumOff`. Note that these pointers will point to arrays of
- * length _numSensors_, as specified in the constructor, and they will only be
+ * length \a numSensors, as specified in the constructor, and they will only be
  * allocated **after** `calibrate()` has been called. If you only calibrate with
  * the emitters on, the calibration arrays that hold the off values will not be
  * allocated.
@@ -362,7 +363,7 @@ class ZumoReflectanceSensorArray : public QTRSensorsRC
  *
  * By default, this function assumes a dark line (high values) on a light
  * background (low values). If your line is light on dark, set the optional
- * second argument _whiteLine_ to true. In this case, each sensor value will be
+ * second argument \a whiteLine to true. In this case, each sensor value will be
  * replaced by the maximum possible value minus its actual value before the
  * averaging.
  *
@@ -379,7 +380,7 @@ class ZumoReflectanceSensorArray : public QTRSensorsRC
  *        on.
  *
  * This pointer is unallocated and set to 0 until `calibrate()` is called, and
- * then allocated to exactly the size required. Depending on the _readMode_
+ * then allocated to exactly the size required. Depending on the \a readMode
  * argument to `calibrate()`, only the On or Off values might be allocated, as
  * required. This variable is made public so that you can use the calibration
  * values for your own calculations and do things like saving them to EEPROM,
