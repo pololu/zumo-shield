@@ -4,6 +4,8 @@ Version: 1.2.3
 Release Date: 2013-11-27
 "www.pololu.com":http://www.pololu.com/
 
+*This library is deprecated; you should use the newer Pololu "Zumo Shield Arduino library":https://github.com/pololu/zumo-shield-arduino-library instead, which is easier to install and use.*
+
 h2. Summary
 
 This is a collection of libraries for the "Arduino":http://pololu.com/catalog/product/2191 that interfaces with the Pololu "Zumo Shield":http://www.pololu.com/catalog/product/2508, "Zumo Reflectance Sensor Array":http://www.pololu.com/catalog/product/1419, "Zumo robot kit":http://www.pololu.com/catalog/product/2509, and "Zumo robot for Arduino":http://www.pololu.com/catalog/product/2510. These libraries provide functions to help you program an Arduino-controlled Zumo robot, and the included example projects demonstrate how to use them for more complex tasks.
